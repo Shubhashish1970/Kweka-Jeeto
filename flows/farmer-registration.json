@@ -1,0 +1,157 @@
+{
+  "version": "7.3",
+  "screens": [
+    {
+      "id": "FARMER_DETAILS",
+      "title": "👤 Farmer Details",
+      "data": {},
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "👤 Farmer Details"
+          },
+          {
+            "type": "TextBody",
+            "text": "Please share your details to get crop advisory."
+          },
+          {
+            "type": "Form",
+            "name": "farmer_form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "farmer_name",
+                "label": "Name",
+                "required": true
+              },
+              {
+                "type": "TextInput",
+                "name": "age",
+                "label": "Age",
+                "required": true
+              },
+              {
+                "type": "TextInput",
+                "name": "profession",
+                "label": "Profession",
+                "required": true
+              },
+              {
+                "type": "Dropdown",
+                "name": "state",
+                "label": "State",
+                "required": true,
+                "data_source": {
+                  "type": "static",
+                  "options": [
+                    { "id": "maharashtra", "title": "Maharashtra" },
+                    { "id": "punjab", "title": "Punjab" },
+                    { "id": "karnataka", "title": "Karnataka" },
+                    { "id": "uttar_pradesh", "title": "Uttar Pradesh" },
+                    { "id": "gujarat", "title": "Gujarat" },
+                    { "id": "rajasthan", "title": "Rajasthan" },
+                    { "id": "madhya_pradesh", "title": "Madhya Pradesh" },
+                    { "id": "andhra_pradesh", "title": "Andhra Pradesh" },
+                    { "id": "tamil_nadu", "title": "Tamil Nadu" },
+                    { "id": "west_bengal", "title": "West Bengal" },
+                    { "id": "bihar", "title": "Bihar" },
+                    { "id": "telangana", "title": "Telangana" },
+                    { "id": "haryana", "title": "Haryana" },
+                    { "id": "kerala", "title": "Kerala" },
+                    { "id": "other", "title": "Other" }
+                  ]
+                }
+              },
+              {
+                "type": "TextInput",
+                "name": "district",
+                "label": "District",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": { "type": "screen", "name": "CROP_SELECTION" },
+                  "payload": {
+                    "farmer_name": "${form.farmer_name}",
+                    "age": "${form.age}",
+                    "profession": "${form.profession}",
+                    "state": "${form.state}",
+                    "district": "${form.district}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CROP_SELECTION",
+      "title": "🌾 Crop Selection",
+      "data": {
+        "farmer_name": { "type": "string", "__example__": "" },
+        "age": { "type": "string", "__example__": "" },
+        "profession": { "type": "string", "__example__": "" },
+        "state": { "type": "string", "__example__": "" },
+        "district": { "type": "string", "__example__": "" }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "🌾 Crop Selection"
+          },
+          {
+            "type": "TextBody",
+            "text": "Select the crop you are growing."
+          },
+          {
+            "type": "Form",
+            "name": "crop_form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "crop",
+                "label": "Crop",
+                "required": true,
+                "data_source": {
+                  "type": "static",
+                  "options": [
+                    { "id": "cotton", "title": "Cotton" },
+                    { "id": "paddy", "title": "Paddy" },
+                    { "id": "chilli", "title": "Chilli" },
+                    { "id": "maize", "title": "Maize" },
+                    { "id": "tomato", "title": "Tomato" }
+                  ]
+                }
+              },
+              {
+                "type": "Footer",
+                "label": "Submit",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "farmer_name": "${data.farmer_name}",
+                    "age": "${data.age}",
+                    "profession": "${data.profession}",
+                    "state": "${data.state}",
+                    "district": "${data.district}",
+                    "crop": "${form.crop}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "terminal": true,
+      "success": true
+    }
+  ]
+}

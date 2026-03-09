@@ -1,0 +1,36 @@
+# Run this workflow ONCE to create and publish the WhatsApp Flow.
+# Add the printed FLOW_ID to GitHub Secrets, then the main deploy workflow will use it.
+name: Deploy Flow (One-Time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-flow:
+    name: Create and Publish WhatsApp Flow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Deploy Flow to Meta
+        id: flow
+        env:
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WABA_ID: ${{ secrets.WABA_ID }}
+        run: |
+          OUTPUT=$(npx ts-node scripts/deploy-flow.ts 2>&1)
+          echo "$OUTPUT"
+          FLOW_ID=$(echo "$OUTPUT" | grep "FLOW_ID=" | tail -1 | cut -d= -f2-)
+          echo "flow_id=$FLOW_ID" >> $GITHUB_OUTPUT
+          echo ""
+          echo "=========================================="
+          echo "Add this to GitHub Secrets:"
+          echo "  FLOW_ID = $FLOW_ID"
+          echo "=========================================="
