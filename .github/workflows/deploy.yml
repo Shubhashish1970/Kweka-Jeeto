@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  REGION: us-central1
+  REGION: asia-south1
 
 jobs:
   deploy-backend:
