@@ -4,6 +4,7 @@ admin/dist/
 admin/node_modules/
 .env
 .env.local
+.flow_id
 .env.*.local
 *.log
 .DS_Store

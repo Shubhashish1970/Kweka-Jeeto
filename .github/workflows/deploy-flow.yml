@@ -24,10 +24,12 @@ jobs:
         env:
           WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
           WABA_ID: ${{ secrets.WABA_ID }}
+        run: npm run deploy:flow
+
+      - name: Set FLOW_ID output
+        if: success()
         run: |
-          OUTPUT=$(npx ts-node scripts/deploy-flow.ts 2>&1)
-          echo "$OUTPUT"
-          FLOW_ID=$(echo "$OUTPUT" | grep "FLOW_ID=" | tail -1 | cut -d= -f2-)
+          FLOW_ID=$(cat .flow_id)
           echo "flow_id=$FLOW_ID" >> $GITHUB_OUTPUT
           echo ""
           echo "=========================================="

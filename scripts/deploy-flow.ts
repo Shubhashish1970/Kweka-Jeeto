@@ -39,14 +39,20 @@ const run = async () => {
     if (flowId) {
       console.log('Flow published successfully!');
       console.log(`FLOW_ID=${flowId}`);
+      // Write for GitHub Actions to read
+      fs.writeFileSync(path.join(__dirname, '../.flow_id'), flowId, 'utf-8');
+      process.exit(0);
     } else {
-      console.error('Unexpected response:', res.data);
+      console.error('Unexpected response:', JSON.stringify(res.data, null, 2));
+      process.exit(1);
     }
   } catch (err: unknown) {
-    const data = err && typeof err === 'object' && 'response' in err
-      ? (err as { response?: { data?: unknown } }).response?.data
-      : err;
-    console.error('Deploy failed:', data);
+    const ax = err as { response?: { status?: number; data?: unknown } };
+    if (ax.response) {
+      console.error('Meta API error:', ax.response.status, JSON.stringify(ax.response.data, null, 2));
+    } else {
+      console.error('Deploy failed:', err);
+    }
     process.exit(1);
   }
 };
