@@ -76,6 +76,9 @@ jobs:
       - name: Install backend deps
         run: npm ci
 
+      - name: Install admin deps
+        run: cd admin && npm ci
+
       - name: Build admin
         run: npm run build:admin
         env:
