@@ -78,13 +78,18 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 
 1. Create a GCP project (or use existing).
 2. Enable APIs: **Cloud Run API**, **Artifact Registry API**.
-3. Create a service account with roles: **Cloud Run Admin**, **Storage Admin**, **Service Account User**.
-4. Create a JSON key → add full JSON as `GCP_SA_KEY` secret.
-5. Create Artifact Registry repository (if needed):
+3. Create a service account with these roles (all required for the deploy workflow):
+   - **Cloud Run Admin** — to deploy the service
+   - **Artifact Registry Writer** — to push the Docker image (without this you get `Permission 'artifactregistry.repositories.uploadArtifacts' denied`)
+   - **Service Account User** — so Cloud Run can use the runtime identity
+   - *(Optional)* **Storage Admin** — only if you use GCS elsewhere
+4. Create a JSON key for that service account → add the full JSON as `GCP_SA_KEY` secret.
+5. Create the Artifact Registry repository in the **same region** as Cloud Run (e.g. `asia-south1`):
    ```bash
    gcloud artifacts repositories create cloud-run-source-deploy \
-     --repository-format=docker --location=us-central1
+     --repository-format=docker --location=asia-south1
    ```
+   If the repository already exists in a different region, either create a new one in `asia-south1` or change `REGION` in `.github/workflows/deploy.yml` to match.
 
 ---
 
@@ -130,7 +135,16 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 
 ---
 
-## 9. Development Checklist
+## 9. Troubleshooting
+
+| Error | Cause | Fix |
+|-------|--------|-----|
+| `Permission 'artifactregistry.repositories.uploadArtifacts' denied` | Service account cannot push Docker images | In GCP: IAM → find the service account used in `GCP_SA_KEY` → add role **Artifact Registry Writer**. Ensure the Artifact Registry repo exists in the same region as in the workflow (e.g. `asia-south1`). |
+| Meta error 100, subcode 33 (Deploy Flow) | Wrong `WABA_ID` or invalid/insufficient token | See Section 2 (troubleshooting under Deploy WhatsApp Flow). Use WhatsApp Business Account ID and a System User token with `whatsapp_business_management`. |
+
+---
+
+## 10. Development Checklist
 
 | Item | Where |
 |------|-------|
@@ -144,7 +158,7 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 
 ---
 
-## 10. No Local Deployment
+## 11. No Local Deployment
 
 - No `npm run dev` for deployment use.
 - No ngrok or local webhook.
