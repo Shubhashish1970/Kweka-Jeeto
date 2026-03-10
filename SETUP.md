@@ -140,6 +140,7 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 | Error | Cause | Fix |
 |-------|--------|-----|
 | `Permission 'artifactregistry.repositories.uploadArtifacts' denied` | Service account cannot push Docker images | In GCP: IAM → find the service account used in `GCP_SA_KEY` → add role **Artifact Registry Writer**. Ensure the Artifact Registry repo exists in the same region as in the workflow (e.g. `asia-south1`). |
+| **Container failed to start and listen on PORT** | App not listening on `0.0.0.0`, wrong port, missing env, or crash before listen | Per [Cloud Run troubleshooting](https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start): (1) App must listen on **0.0.0.0** (not 127.0.0.1) and on the port from the `PORT` env var. (2) Open **Cloud Run → Logs** (or Logs Explorer, filter by `resource.type="cloud_run_revision"` and your service name) to see the real error—e.g. `Missing required env: X` or MongoDB connection errors. Fix the missing secret or config and redeploy. |
 | Meta error 100, subcode 33 (Deploy Flow) | Wrong `WABA_ID` or invalid/insufficient token | See Section 2 (troubleshooting under Deploy WhatsApp Flow). Use WhatsApp Business Account ID and a System User token with `whatsapp_business_management`. |
 
 ---

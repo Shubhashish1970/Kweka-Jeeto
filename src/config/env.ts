@@ -6,10 +6,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const getEnv = (key: string, defaultValue?: string): string => {
   const value = process.env[key] ?? defaultValue;
-  if (isProduction && !value && !defaultValue) {
+  // Only throw when missing and no default was provided (defaultValue === undefined)
+  if (isProduction && (value === undefined || value === '') && defaultValue === undefined) {
     throw new Error(`Missing required env: ${key}`);
   }
-  return value || '';
+  return value ?? defaultValue ?? '';
 };
 
 export const env = {

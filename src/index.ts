@@ -31,8 +31,8 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Bind to PORT immediately so Cloud Run sees the container as started; connect DB in background
-const server = app.listen(env.port, () => {
+// Cloud Run: must listen on 0.0.0.0 (all interfaces), not 127.0.0.1 — see Cloud Run troubleshooting
+const server = app.listen(env.port, '0.0.0.0', () => {
   logger.info(`Server listening on port ${env.port}`);
   connectDb().catch((err) => {
     logger.error('MongoDB connect failed (server still up):', err);
