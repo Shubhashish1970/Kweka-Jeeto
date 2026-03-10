@@ -10,3 +10,7 @@ admin/node_modules/
 .idea/
 .vscode/
 *.tsbuildinfo
+scripts/*.js
+scripts/*.js.map
+scripts/*.d.ts
+scripts/*.d.ts.map
