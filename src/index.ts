@@ -31,14 +31,12 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-const server = app.listen(env.port, async () => {
-  try {
-    await connectDb();
-    logger.info(`Server running on port ${env.port}`);
-  } catch (err) {
-    logger.error('Failed to start:', err);
-    process.exit(1);
-  }
+// Bind to PORT immediately so Cloud Run sees the container as started; connect DB in background
+const server = app.listen(env.port, () => {
+  logger.info(`Server listening on port ${env.port}`);
+  connectDb().catch((err) => {
+    logger.error('MongoDB connect failed (server still up):', err);
+  });
 });
 
 const shutdown = async () => {
