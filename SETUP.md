@@ -57,6 +57,10 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 3. Click **Run workflow**.
 4. After it completes, copy the printed `FLOW_ID` and add it as a GitHub Secret.
 
+**If you see Meta error 400 (code 100, error_subcode 33):** The message "Object with ID does not exist or cannot be loaded due to missing permissions" usually means:
+- **Wrong ID:** You may have used the **Phone Number ID** instead of the **WhatsApp Business Account ID**. They are different. Use: Meta for Developers → Your App → WhatsApp → **API Setup** → copy **"WhatsApp Business Account ID"** (not "Phone number ID").
+- **Token:** Use a **System User** access token (not the 24-hour temporary token) and ensure the System User has the **whatsapp_business_management** permission so it can create flows on the WABA.
+
 ---
 
 ## 3. Development Deployment Order
