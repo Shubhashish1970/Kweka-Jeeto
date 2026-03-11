@@ -97,7 +97,12 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 
 1. Create a Firebase project (or use existing).
 2. Enable **Hosting**.
-3. Run `firebase login:ci` → add token as `FIREBASE_TOKEN` secret.
+3. Generate a CI token and add to GitHub Secrets:
+   - Install Firebase CLI: `npm install -g firebase-tools`
+   - Run `firebase login:ci` (opens browser to sign in with your Google account).
+   - Copy the token printed in the terminal.
+   - In GitHub: **Settings → Secrets and variables → Actions** → add **FIREBASE_TOKEN** (paste the token) and **FIREBASE_PROJECT_ID** (Firebase Console → Project Settings → Project ID).
+   - If you later see "Failed to authenticate" on deploy, the token may have expired; run `firebase login:ci` again and update the **FIREBASE_TOKEN** secret.
 
 ---
 
@@ -142,6 +147,7 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 | `Permission 'artifactregistry.repositories.uploadArtifacts' denied` | Service account cannot push Docker images | In GCP: IAM → find the service account used in `GCP_SA_KEY` → add role **Artifact Registry Writer**. Ensure the Artifact Registry repo exists in the same region as in the workflow (e.g. `asia-south1`). |
 | **Container failed to start and listen on PORT** | App not listening on `0.0.0.0`, wrong port, missing env, or crash before listen | Per [Cloud Run troubleshooting](https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start): (1) App must listen on **0.0.0.0** (not 127.0.0.1) and on the port from the `PORT` env var. (2) Open **Cloud Run → Logs** (or Logs Explorer, filter by `resource.type="cloud_run_revision"` and your service name) to see the real error—e.g. `Missing required env: X` or MongoDB connection errors. Fix the missing secret or config and redeploy. |
 | **Missing required env: ADMIN_PASSWORD** (or **ADMIN_JWT_SECRET**) | Those GitHub Secrets are not set or are empty | In GitHub: **Settings → Secrets and variables → Actions**. Add **ADMIN_PASSWORD** (admin login password) and **ADMIN_JWT_SECRET** (e.g. `openssl rand -base64 32`). Re-run the Deploy workflow or push a commit so the new env vars are passed to Cloud Run. |
+| **Firebase: Failed to authenticate, have you run firebase login?** | `FIREBASE_TOKEN` is missing, expired, or invalid | Add or refresh the token: run `firebase login:ci` locally (install CLI with `npm install -g firebase-tools` first), sign in in the browser, copy the printed token, and set it as the **FIREBASE_TOKEN** GitHub Secret. Ensure **FIREBASE_PROJECT_ID** is also set (Firebase Console → Project Settings). |
 | Meta error 100, subcode 33 (Deploy Flow) | Wrong `WABA_ID` or invalid/insufficient token | See Section 2 (troubleshooting under Deploy WhatsApp Flow). Use WhatsApp Business Account ID and a System User token with `whatsapp_business_management`. |
 
 ---

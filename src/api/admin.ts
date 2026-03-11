@@ -10,7 +10,11 @@ export const adminRouter = Router();
 const JWT_COOKIE_NAME = 'admin_token';
 const JWT_EXPIRY = '7d';
 
+// Set ADMIN_AUTH_DISABLED=true to skip auth (e.g. while focusing on functionality); remove to re-enable
+const authDisabled = process.env.ADMIN_AUTH_DISABLED === 'true';
+
 const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (authDisabled) return next();
   const token = req.cookies?.[JWT_COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '');
   if (!token) {
     res.status(401).json({ error: 'Unauthorized' });
