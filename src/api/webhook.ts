@@ -14,6 +14,11 @@ webhookRouter.get('/', (req: Request, res: Response) => {
     logger.info('Webhook verified');
     res.status(200).send(challenge);
   } else {
+    if (mode !== 'subscribe') {
+      logger.warn('Webhook verification failed: hub.mode is not subscribe', { mode });
+    } else {
+      logger.warn('Webhook verification failed: hub.verify_token does not match WHATSAPP_VERIFY_TOKEN. Use the same custom string in Meta and in your env.');
+    }
     res.status(403).send('Forbidden');
   }
 });

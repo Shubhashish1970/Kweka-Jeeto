@@ -12,9 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci && cd admin && npm ci && npm run build
+      - name: Set Firebase hosting site in firebase.json
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: sed -i.bak "s/FIREBASE_PROJECT_ID/$FIREBASE_PROJECT_ID/g" firebase.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KWEKA_JEETO }}
           channelId: live
-          projectId: kweka-jeeto
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}

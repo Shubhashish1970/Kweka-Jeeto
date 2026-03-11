@@ -115,11 +115,13 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 
 After the first successful deploy:
 
-1. Meta Developer Console → Your App → WhatsApp → Configuration.
+1. Meta Developer Console → Your App → WhatsApp → Configuration (or use the Graph API to set the webhook).
 2. **Webhook URL:** `https://YOUR_CLOUD_RUN_URL/webhook`  
-   (Get URL from Cloud Run console or from the deploy workflow logs.)
-3. **Verify Token:** Same as `WHATSAPP_VERIFY_TOKEN` secret.
-4. Subscribe to `messages`.
+   (Get URL from Cloud Run console or from the deploy workflow logs. Must be HTTPS and publicly reachable.)
+3. **Verify Token:** Must be **exactly the same** as your **`WHATSAPP_VERIFY_TOKEN`** GitHub Secret.  
+   - This is a **custom string you choose** (e.g. `prod-verify-xyz-123`), **not** the Facebook/Meta access token.  
+   - If you set the webhook via API (`override_callback_uri` and `verify_token`), use the same value as `WHATSAPP_VERIFY_TOKEN` for `verify_token`. Using the access token as `verify_token` will cause **403 Callback verification failed**.
+4. Subscribe to **messages**.
 
 ---
 
@@ -144,6 +146,7 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 | **Container failed to start and listen on PORT** | App not listening on `0.0.0.0`, wrong port, missing env, or crash before listen | Per [Cloud Run troubleshooting](https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start): (1) App must listen on **0.0.0.0** (not 127.0.0.1) and on the port from the `PORT` env var. (2) Open **Cloud Run → Logs** (or Logs Explorer, filter by `resource.type="cloud_run_revision"` and your service name) to see the real error—e.g. `Missing required env: X` or MongoDB connection errors. Fix the missing secret or config and redeploy. |
 | **Missing required env: ADMIN_PASSWORD** (or **ADMIN_JWT_SECRET**) | Those GitHub Secrets are not set or are empty | In GitHub: **Settings → Secrets and variables → Actions**. Add **ADMIN_PASSWORD** (admin login password) and **ADMIN_JWT_SECRET** (e.g. `openssl rand -base64 32`). Re-run the Deploy workflow or push a commit so the new env vars are passed to Cloud Run. |
 | **Firebase: Failed to authenticate** or **hosting target of a site with no site name** | Auth uses **GCP_SA_KEY**; service account needs Firebase Hosting Admin. Or `firebase.json` site not set. | Ensure the service account in **GCP_SA_KEY** has **Firebase Hosting Admin** on the Firebase project (Firebase Console → Project Settings → Users and permissions). The workflow injects the hosting site from **FIREBASE_PROJECT_ID**; ensure that secret is set. |
+| **Meta webhook: Callback verification failed, HTTP 403** | The **verify_token** you sent to Meta does not match **WHATSAPP_VERIFY_TOKEN** in your app. | **Verify token** must be a custom string (e.g. `prod-verify-xyz-123`), **not** the Facebook access token. Set it to the **exact same** value as the **WHATSAPP_VERIFY_TOKEN** GitHub Secret. Then update the webhook in Meta (Dashboard or API) with this verify token and retry. |
 | Meta error 100, subcode 33 (Deploy Flow) | Wrong `WABA_ID` or invalid/insufficient token | See Section 2 (troubleshooting under Deploy WhatsApp Flow). Use WhatsApp Business Account ID and a System User token with `whatsapp_business_management`. |
 
 ---
