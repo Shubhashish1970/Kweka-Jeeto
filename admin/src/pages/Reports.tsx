@@ -10,15 +10,30 @@ interface Summary {
 export default function Reports() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .get<Summary>('/reports/summary')
-      .then(setSummary)
+      .then((data) => {
+        setSummary(data);
+        setError(null);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Backend unreachable'))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <p>Loading...</p>;
+  if (error) {
+    return (
+      <div>
+        <p style={{ color: '#dc2626', marginBottom: 8 }}>Failed to load</p>
+        <p style={{ color: '#6b7280', fontSize: 14 }}>
+          {error}. If the admin was deployed via &quot;Deploy to Firebase Hosting on merge&quot;, add GitHub secret <strong>VITE_API_URL</strong> with your Cloud Run backend URL and redeploy.
+        </p>
+      </div>
+    );
+  }
   if (!summary) return <p>Failed to load</p>;
 
   const cropEntries = Object.entries(summary.byCrop).sort((a, b) => b[1] - a[1]);

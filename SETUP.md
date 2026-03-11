@@ -47,6 +47,8 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 
 **Note:** Admin is deployed using the same **GCP_SA_KEY** as the backend. The service account must have **Firebase Hosting Admin** (or **Firebase Admin**) role on the Firebase project — add it in Firebase Console → Project Settings → Users and permissions, or in GCP IAM. `FIREBASE_TOKEN` is no longer used.
 
+If you use the **Deploy to Firebase Hosting on merge** workflow (in addition to or instead of the main **Deploy** workflow), add secret **VITE_API_URL** with your Cloud Run backend URL (e.g. `https://kweka-jeeto-744226784105.asia-south1.run.app`) so that Dashboard and Reports can load. The main **Deploy** workflow sets this automatically from the backend deploy output.
+
 ---
 
 ## 2. One-Time: Deploy WhatsApp Flow

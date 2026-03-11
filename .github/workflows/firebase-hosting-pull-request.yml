@@ -13,7 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && cd admin && npm ci && npm run build
+      - name: Build admin (auth disabled for now)
+        run: npm ci && cd admin && npm ci && npm run build
+        env:
+          VITE_ADMIN_AUTH_DISABLED: 'true'
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
       - name: Set Firebase hosting site in firebase.json
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
