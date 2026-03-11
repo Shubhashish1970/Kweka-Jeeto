@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "FIREBASE_PROJECT_ID",
     "public": "admin/dist",
     "ignore": [
       "firebase.json",
