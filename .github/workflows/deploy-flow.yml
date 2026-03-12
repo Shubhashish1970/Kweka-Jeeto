@@ -9,8 +9,22 @@ jobs:
   deploy-flow:
     name: Create and Publish WhatsApp Flow
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check required secrets
+        run: |
+          if [ -z "${{ secrets.WHATSAPP_ACCESS_TOKEN }}" ]; then
+            echo "::error::GitHub secret WHATSAPP_ACCESS_TOKEN is not set. Add it in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          if [ -z "${{ secrets.WABA_ID }}" ]; then
+            echo "::error::GitHub secret WABA_ID is not set. Add it in Settings → Secrets and variables → Actions (use WhatsApp Business Account ID, not Phone Number ID)."
+            exit 1
+          fi
+          echo "Required secrets are set."
 
       - uses: actions/setup-node@v4
         with:
