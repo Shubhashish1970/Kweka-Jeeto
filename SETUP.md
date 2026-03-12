@@ -110,6 +110,7 @@ If you use the **Deploy to Firebase Hosting on merge** workflow (in addition to 
 2. Create a database user.
 3. **Network Access:** Add `0.0.0.0/0` (allow Cloud Run).
 4. Copy connection string → add as `MONGODB_URI` secret.
+5. **Test connectivity:** In GitHub → **Actions** → **Test MongoDB connection** → **Run workflow**. It uses your `MONGODB_URI` secret and reports OK or the error. You can also run locally: `MONGODB_URI="your-uri" npm run test:mongodb`.
 
 ---
 
@@ -124,6 +125,14 @@ After the first successful deploy:
    - This is a **custom string you choose** (e.g. `prod-verify-xyz-123`), **not** the Facebook/Meta access token.  
    - If you set the webhook via API (`override_callback_uri` and `verify_token`), use the same value as `WHATSAPP_VERIFY_TOKEN` for `verify_token`. Using the access token as `verify_token` will cause **403 Callback verification failed**.
 4. Subscribe to **messages**.
+
+**Quick test (no WhatsApp needed):** From your machine, send a sample webhook payload to confirm the endpoint is reachable and returns 200:
+
+```bash
+WEBHOOK_URL=https://YOUR_CLOUD_RUN_URL/webhook ./scripts/test-webhook.sh
+```
+
+Replace `YOUR_CLOUD_RUN_URL` with your actual URL (e.g. `kweka-jeeto-744226784105.asia-south1.run.app`). If you get "OK: Webhook returned 200", the subscription is working. To receive the flow on your phone, edit `scripts/test-webhook.sh` and set the `"from"` number to your WhatsApp number (with country code, no +), then run the script again.
 
 ---
 
@@ -147,6 +156,7 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 | `Permission 'artifactregistry.repositories.uploadArtifacts' denied` | Service account cannot push Docker images | In GCP: IAM → find the service account used in `GCP_SA_KEY` → add role **Artifact Registry Writer**. Ensure the Artifact Registry repo exists in the same region as in the workflow (e.g. `asia-south1`). |
 | **Container failed to start and listen on PORT** | App not listening on `0.0.0.0`, wrong port, missing env, or crash before listen | Per [Cloud Run troubleshooting](https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start): (1) App must listen on **0.0.0.0** (not 127.0.0.1) and on the port from the `PORT` env var. (2) Open **Cloud Run → Logs** (or Logs Explorer, filter by `resource.type="cloud_run_revision"` and your service name) to see the real error—e.g. `Missing required env: X` or MongoDB connection errors. Fix the missing secret or config and redeploy. |
 | **Missing required env: ADMIN_PASSWORD** (or **ADMIN_JWT_SECRET**) | Those GitHub Secrets are not set or are empty | In GitHub: **Settings → Secrets and variables → Actions**. Add **ADMIN_PASSWORD** (admin login password) and **ADMIN_JWT_SECRET** (e.g. `openssl rand -base64 32`). Re-run the Deploy workflow or push a commit so the new env vars are passed to Cloud Run. |
+| **MongooseError: Operation 'configs.findOne()' buffering timed out** or **ENOTFOUND** / **querySrv** for `*mongodb.net` | MongoDB not reachable from Cloud Run (wrong URI, or Atlas network not allowing Cloud Run). | Check **MONGODB_URI** in GitHub Secrets: use the full Atlas connection string (e.g. `mongodb+srv://user:pass@cluster.xxxxx.mongodb.net/dbname`). In MongoDB Atlas → Network Access, add **0.0.0.0/0** so Cloud Run can connect. The app now falls back to env vars for flow/config when DB is unreachable, but saving farmers and admin config need a working DB. |
 | **Firebase: Failed to authenticate** or **hosting target of a site with no site name** | Auth uses **GCP_SA_KEY**; service account needs Firebase Hosting Admin. Or `firebase.json` site not set. | Ensure the service account in **GCP_SA_KEY** has **Firebase Hosting Admin** on the Firebase project (Firebase Console → Project Settings → Users and permissions). The workflow injects the hosting site from **FIREBASE_PROJECT_ID**; ensure that secret is set. |
 | **Meta webhook: Callback verification failed, HTTP 403** | The **verify_token** you sent to Meta does not match **WHATSAPP_VERIFY_TOKEN** in your app. | **Verify token** must be a custom string (e.g. `prod-verify-xyz-123`), **not** the Facebook access token. Set it to the **exact same** value as the **WHATSAPP_VERIFY_TOKEN** GitHub Secret. Then update the webhook in Meta (Dashboard or API) with this verify token and retry. |
 | Meta error 100, subcode 33 (Deploy Flow) | Wrong `WABA_ID` or invalid/insufficient token | See Section 2 (troubleshooting under Deploy WhatsApp Flow). Use WhatsApp Business Account ID and a System User token with `whatsapp_business_management`. |

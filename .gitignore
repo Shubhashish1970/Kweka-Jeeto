@@ -12,6 +12,8 @@ admin/node_modules/
 .vscode/
 *.tsbuildinfo
 scripts/*.js
+!scripts/test-mongodb-connection.js
+!scripts/generate-password-hash.js
 scripts/*.js.map
 scripts/*.d.ts
 scripts/*.d.ts.map

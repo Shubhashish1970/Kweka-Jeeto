@@ -1,20 +1,25 @@
 import { Config, IConfig } from '../models/Config';
 
+/** When MongoDB is unreachable (e.g. ENOTFOUND, timeout), return null so callers can use env fallbacks. */
+const catchConfigError = <T>(fn: () => Promise<T>): Promise<T | null> =>
+  fn().catch(() => null);
+
 export const getConfig = async (key: string): Promise<IConfig | null> => {
-  return Config.findOne({ key }).lean() as Promise<IConfig | null>;
+  return catchConfigError(() => Config.findOne({ key }).lean() as Promise<IConfig | null>);
 };
 
 export const getConfigValue = async <T = unknown>(key: string): Promise<T | null> => {
-  const doc = await Config.findOne({ key }).lean();
+  const doc = await catchConfigError(() => Config.findOne({ key }).lean());
   return doc ? (doc.value as T) : null;
 };
 
 export const getAllConfig = async (): Promise<Record<string, unknown>> => {
-  const docs = await Config.find({}).lean();
-  return docs.reduce((acc, d) => {
+  const docs = await catchConfigError(() => Config.find({}).lean());
+  if (!docs || !Array.isArray(docs)) return {};
+  return docs.reduce((acc: Record<string, unknown>, d: { key: string; value: unknown }) => {
     acc[d.key] = d.value;
     return acc;
-  }, {} as Record<string, unknown>);
+  }, {});
 };
 
 export const setConfig = async (

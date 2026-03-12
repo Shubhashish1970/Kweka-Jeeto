@@ -10,7 +10,8 @@
     "build:admin": "cd admin && npm run build",
     "start": "node dist/index.js",
     "deploy": "ts-node scripts/deploy-flow.ts",
-    "deploy:flow": "ts-node scripts/deploy-flow.ts"
+    "deploy:flow": "ts-node scripts/deploy-flow.ts",
+    "test:mongodb": "node scripts/test-mongodb-connection.js"
   },
   "engines": {
     "node": ">=18.0.0"
