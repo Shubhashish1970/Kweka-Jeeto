@@ -13,28 +13,23 @@ const getEnv = (key: string, defaultValue?: string): string => {
   return value ?? defaultValue ?? '';
 };
 
+// Use defaults so the container always starts and listens on PORT (Cloud Run health check).
+// Missing/empty secrets are handled at runtime by each feature (webhook, message service, admin).
 export const env = {
-  // WhatsApp (all required when deployed)
   whatsapp: {
-    accessToken: getEnv('WHATSAPP_ACCESS_TOKEN'),
-    phoneNumberId: getEnv('WHATSAPP_PHONE_NUMBER_ID'),
-    verifyToken: getEnv('WHATSAPP_VERIFY_TOKEN'),
-    wabaId: getEnv('WABA_ID'),
+    accessToken: getEnv('WHATSAPP_ACCESS_TOKEN', ''),
+    phoneNumberId: getEnv('WHATSAPP_PHONE_NUMBER_ID', ''),
+    verifyToken: getEnv('WHATSAPP_VERIFY_TOKEN', ''),
+    wabaId: getEnv('WABA_ID', ''),
     flowId: getEnv('FLOW_ID', ''),
   },
-
-  // MongoDB (required when deployed)
   mongodb: {
-    uri: getEnv('MONGODB_URI'),
+    uri: getEnv('MONGODB_URI', ''),
   },
-
-  // Admin (required when deployed)
   admin: {
-    password: getEnv('ADMIN_PASSWORD'),
-    jwtSecret: getEnv('ADMIN_JWT_SECRET'),
+    password: getEnv('ADMIN_PASSWORD', ''),
+    jwtSecret: getEnv('ADMIN_JWT_SECRET', ''),
   },
-
-  // Server (Cloud Run uses PORT=8080)
   port: parseInt(getEnv('PORT', '8080'), 10),
   nodeEnv: getEnv('NODE_ENV', 'production'),
   apiBaseUrl: getEnv('API_BASE_URL', ''),
