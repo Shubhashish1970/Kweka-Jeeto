@@ -20,8 +20,8 @@ jobs:
             echo "::error::GitHub secret WHATSAPP_ACCESS_TOKEN is not set. Add it in Settings → Secrets and variables → Actions."
             exit 1
           fi
-          if [ -z "${{ secrets.WABA_ID }}" ]; then
-            echo "::error::GitHub secret WABA_ID is not set. Add it in Settings → Secrets and variables → Actions (use WhatsApp Business Account ID, not Phone Number ID)."
+          if [ -z "${{ secrets.WABA_ID }}" ] && [ -z "${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}" ]; then
+            echo "::error::Set at least one: WABA_ID (WhatsApp Business Account ID) or WHATSAPP_PHONE_NUMBER_ID. WABA can be auto-resolved from token when Phone Number ID is set."
             exit 1
           fi
           echo "Required secrets are set."
@@ -38,6 +38,7 @@ jobs:
         env:
           WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
           WABA_ID: ${{ secrets.WABA_ID }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
         run: npm run deploy:flow
 
       - name: Set FLOW_ID output

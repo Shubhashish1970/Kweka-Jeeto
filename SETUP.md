@@ -15,7 +15,7 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 | `WHATSAPP_ACCESS_TOKEN` | Meta Graph API access token | Meta App → WhatsApp → API Setup → Use **System User** token |
 | `WHATSAPP_PHONE_NUMBER_ID` | Phone number ID for sending messages | Meta App → WhatsApp → API Setup → Phone number ID |
 | `WHATSAPP_VERIFY_TOKEN` | Webhook verification token (you choose) | Create a random string, e.g. `prod-verify-xyz-123` |
-| `WABA_ID` | WhatsApp Business Account ID | Meta App → WhatsApp → API Setup → WhatsApp Business Account ID |
+| `WABA_ID` | WhatsApp Business Account ID (optional for Deploy Flow) | From Meta → WhatsApp → API Setup. If not set, Deploy Flow tries to resolve WABA from the token (needs `business_management` + `whatsapp_business_management`) or from **WHATSAPP_PHONE_NUMBER_ID** when you have multiple WABAs. |
 | `FLOW_ID` | Flow ID (obtained from Deploy Flow workflow) | Run **Deploy Flow** workflow once → add printed FLOW_ID to secrets |
 
 ### MongoDB (from [MongoDB Atlas](https://cloud.mongodb.com/))
@@ -53,14 +53,26 @@ If you use the **Deploy to Firebase Hosting on merge** workflow (in addition to 
 
 ## 2. One-Time: Deploy WhatsApp Flow
 
-1. Add `WHATSAPP_ACCESS_TOKEN` and `WABA_ID` to GitHub Secrets.
+1. Add **WHATSAPP_ACCESS_TOKEN** to GitHub Secrets. Add **WABA_ID** and/or **WHATSAPP_PHONE_NUMBER_ID** (at least one required). You do not need to create a token per WABA: the script can resolve the WABA from the same token if it has `business_management` and `whatsapp_business_management` (and **WHATSAPP_PHONE_NUMBER_ID** helps when the business has multiple WABAs).
 2. Go to **Actions → Deploy Flow (One-Time)**.
 3. Click **Run workflow**.
 4. After it completes, copy the printed `FLOW_ID` and add it as a GitHub Secret.
 
-**If you see Meta error 400 (code 100, error_subcode 33):** The message "Object with ID does not exist or cannot be loaded due to missing permissions" usually means:
-- **Wrong ID:** You may have used the **Phone Number ID** instead of the **WhatsApp Business Account ID**. They are different. Use: Meta for Developers → Your App → WhatsApp → **API Setup** → copy **"WhatsApp Business Account ID"** (not "Phone number ID").
-- **Token:** Use a **System User** access token (not the 24-hour temporary token) and ensure the System User has the **whatsapp_business_management** permission so it can create flows on the WABA.
+**If Step 1 OK but Step 2 fails (WABA check FAILED, code 100, subcode 33):** The token is valid but Meta rejects the WABA ID or the token cannot access that business account. Do the following in order:
+
+1. **Fix WABA_ID (most common):**
+   - In [Meta for Developers](https://developers.facebook.com/) → Your App → **WhatsApp** → **API Setup**.
+   - On that page you see **two different IDs**: **"Phone number ID"** and **"WhatsApp Business Account ID"**.
+   - The **WABA_ID** secret must be the **WhatsApp Business Account ID** (the business account), not the Phone number ID.
+   - Copy the **WhatsApp Business Account ID** → GitHub **Settings → Secrets and variables → Actions** → edit **WABA_ID** → paste and save.
+
+2. **Fix token permissions (if WABA_ID is already correct):**
+   - The token must be a **System User** token (not the temporary token from the API Setup page).
+   - In **Meta Business Settings** → **Users** → **System Users** → select the user used for the app → **Add Assets** → your App → enable **whatsapp_business_management** (and optionally **whatsapp_business_messaging**).
+   - **Generate a new token** for that System User with **whatsapp_business_management**.
+   - Update the **WHATSAPP_ACCESS_TOKEN** GitHub secret with this new token and re-run **Deploy Flow (One-Time)**.
+
+3. **Confirm app is linked to the right WABA:** In Meta for Developers → Your App → WhatsApp → API Setup, the listed "WhatsApp Business Account" should be the one you expect. If you have multiple accounts, ensure the correct one is connected.
 
 ---
 
