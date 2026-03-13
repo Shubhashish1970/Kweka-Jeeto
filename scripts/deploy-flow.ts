@@ -158,7 +158,7 @@ const run = async () => {
     const res = await axios.post(
       `${GRAPH_API}/${effectiveWabaId}/flows`,
       {
-        name: 'farmer_registration_poc',
+        name: 'farmer_registration_poc_v2',
         categories: ['LEAD_GENERATION'],
         flow_json: flowJson,
         publish: true,

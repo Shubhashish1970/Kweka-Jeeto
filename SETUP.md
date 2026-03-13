@@ -173,6 +173,7 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 | **Meta webhook: Callback verification failed, HTTP 403** | The **verify_token** you sent to Meta does not match **WHATSAPP_VERIFY_TOKEN** in your app. | **Verify token** must be a custom string (e.g. `prod-verify-xyz-123`), **not** the Facebook access token. Set it to the **exact same** value as the **WHATSAPP_VERIFY_TOKEN** GitHub Secret. Then update the webhook in Meta (Dashboard or API) with this verify token and retry. |
 | Meta error 100, subcode 33 (Deploy Flow) | Wrong `WABA_ID` or invalid/insufficient token | See Section 2 (troubleshooting under Deploy WhatsApp Flow). Use WhatsApp Business Account ID and a System User token with `whatsapp_business_management`. |
 | Meta error 139002 "Flow JSON validation" (Deploy Flow) | Invalid Flow JSON structure | Flow was created as draft but publish failed. Use Flow JSON version **5.0**; use **data_source** as a direct array of `{ "id", "title" }` for static dropdowns; use **data: {}** on screens (no `__example__`); avoid invalid characters in titles. Re-run Deploy Flow after fixing `flows/farmer-registration.json`. |
+| Meta error 100, subcode 4016019 "Flow name is not unique" (Deploy Flow) | A flow with that name already exists on the WABA | The script uses a unique name (e.g. `farmer_registration_poc_v2`). If you see this again, change the flow `name` in `scripts/deploy-flow.ts` to a new value (e.g. `_v3`) and re-run. |
 
 ---
 
