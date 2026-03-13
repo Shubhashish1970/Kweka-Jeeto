@@ -5,6 +5,7 @@ admin/node_modules/
 .env
 .env.local
 .flow_id
+.flow_name
 .env.*.local
 *.log
 .DS_Store

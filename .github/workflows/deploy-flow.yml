@@ -45,9 +45,11 @@ jobs:
         if: success()
         run: |
           FLOW_ID=$(cat .flow_id)
+          FLOW_NAME=$(cat .flow_name 2>/dev/null || echo "farmer_registration_poc_*")
           echo "flow_id=$FLOW_ID" >> $GITHUB_OUTPUT
           echo ""
           echo "=========================================="
+          echo "Flow name: $FLOW_NAME"
           echo "Add this to GitHub Secrets:"
           echo "  FLOW_ID = $FLOW_ID"
           echo "=========================================="

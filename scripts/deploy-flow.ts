@@ -1,9 +1,17 @@
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+/** 6-character alphanumeric (0-9, a-z) for unique flow name per run. */
+function randomFlowSuffix(): string {
+  const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+  const bytes = crypto.randomBytes(6);
+  return Array.from(bytes, (b) => chars[b % 36]).join('');
+}
 
 const WABA_ID = process.env.WABA_ID;
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -155,10 +163,13 @@ const run = async () => {
     }
     console.log('Step 2 OK: WABA access confirmed. Creating flow...');
 
+    const flowName = `farmer_registration_poc_${randomFlowSuffix()}`;
+    console.log('Flow name (unique per run):', flowName);
+
     const res = await axios.post(
       `${GRAPH_API}/${effectiveWabaId}/flows`,
       {
-        name: 'farmer_registration_poc_v2',
+        name: flowName,
         categories: ['LEAD_GENERATION'],
         flow_json: flowJson,
         publish: true,
@@ -169,8 +180,10 @@ const run = async () => {
     const flowId = res.data?.id;
     if (flowId) {
       console.log('Flow published successfully!');
+      console.log('Flow name:', flowName);
       console.log(`FLOW_ID=${flowId}`);
       fs.writeFileSync(path.join(__dirname, '../.flow_id'), flowId, 'utf-8');
+      fs.writeFileSync(path.join(__dirname, '../.flow_name'), flowName, 'utf-8');
       process.exit(0);
     } else {
       console.error('Unexpected response:', JSON.stringify(res.data, null, 2));
