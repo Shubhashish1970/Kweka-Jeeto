@@ -6,11 +6,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-/** 6-character alphanumeric (0-9, a-z) for unique flow name per run. */
+/** 6-character alphanumeric (0-9, a-z) for unique flow name per run. Meta flow name must be alphanumeric + underscore only. */
 function randomFlowSuffix(): string {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
   const bytes = crypto.randomBytes(6);
   return Array.from(bytes, (b) => chars[b % 36]).join('');
+}
+
+/** Ensure flow name only contains [a-z0-9_] per Meta (PATTERN_MISMATCH / invalid flow name). */
+function sanitizeFlowName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_]/g, '');
 }
 
 const WABA_ID = process.env.WABA_ID;
@@ -163,7 +168,7 @@ const run = async () => {
     }
     console.log('Step 2 OK: WABA access confirmed. Creating flow...');
 
-    const flowName = `farmer_registration_poc_${randomFlowSuffix()}`;
+    const flowName = sanitizeFlowName(`farmer_registration_poc_${randomFlowSuffix()}`);
     console.log('Flow name (unique per run):', flowName);
 
     const res = await axios.post(

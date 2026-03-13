@@ -90,7 +90,13 @@
     {
       "id": "CROP_SELECTION",
       "title": "Crop Selection",
-      "data": {},
+      "data": {
+        "farmer_name": { "type": "string" },
+        "age": { "type": "string" },
+        "profession": { "type": "string" },
+        "state": { "type": "string" },
+        "district": { "type": "string" }
+      },
       "layout": {
         "type": "SingleColumnLayout",
         "children": [
