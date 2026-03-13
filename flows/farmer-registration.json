@@ -43,7 +43,7 @@
                 "name": "state",
                 "label": "State",
                 "required": true,
-                "data_source": [
+                "data-source": [
                   { "id": "maharashtra", "title": "Maharashtra" },
                   { "id": "punjab", "title": "Punjab" },
                   { "id": "karnataka", "title": "Karnataka" },
@@ -91,11 +91,11 @@
       "id": "CROP_SELECTION",
       "title": "Crop Selection",
       "data": {
-        "farmer_name": { "type": "string" },
-        "age": { "type": "string" },
-        "profession": { "type": "string" },
-        "state": { "type": "string" },
-        "district": { "type": "string" }
+        "farmer_name": { "type": "string", "__example__": "" },
+        "age": { "type": "string", "__example__": "" },
+        "profession": { "type": "string", "__example__": "" },
+        "state": { "type": "string", "__example__": "" },
+        "district": { "type": "string", "__example__": "" }
       },
       "layout": {
         "type": "SingleColumnLayout",
@@ -117,7 +117,7 @@
                 "name": "crop",
                 "label": "Crop",
                 "required": true,
-                "data_source": [
+                "data-source": [
                   { "id": "cotton", "title": "Cotton" },
                   { "id": "paddy", "title": "Paddy" },
                   { "id": "chilli", "title": "Chilli" },
