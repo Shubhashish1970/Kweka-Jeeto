@@ -10,53 +10,64 @@ export default function Layout() {
     navigate('/login');
   };
 
-  const navStyle = ({ isActive }: { isActive: boolean }) => ({
-    padding: '8px 16px',
-    color: isActive ? '#2563eb' : '#666',
-    fontWeight: isActive ? 600 : 400,
-    textDecoration: 'none',
-    borderRadius: 6,
-  });
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside
-        style={{
-          width: 220,
-          background: '#fff',
-          borderRight: '1px solid #e5e7eb',
-          padding: 16,
-        }}
-      >
-        <h2 style={{ marginBottom: 24, fontSize: 18 }}>🌾 Kweka Jeeto</h2>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <NavLink to="/dashboard" style={navStyle}>
+    <div className="flex min-h-screen">
+      <aside className="w-56 bg-slate-900 flex flex-col p-4 shrink-0">
+        <h2 className="text-base font-bold text-white uppercase tracking-wide mb-6 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-slate-900 text-lg">🌾</span>
+          Kweka Jeeto
+        </h2>
+        <nav className="flex flex-col gap-1">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-primary/20 text-primary' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`
+            }
+          >
             Dashboard
           </NavLink>
-          <NavLink to="/farmers" style={navStyle}>
+          <NavLink
+            to="/farmers"
+            className={({ isActive }) =>
+              `px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-primary/20 text-primary' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`
+            }
+          >
             Farmers
           </NavLink>
-          <NavLink to="/reports" style={navStyle}>
+          <NavLink
+            to="/reports"
+            className={({ isActive }) =>
+              `px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-primary/20 text-primary' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`
+            }
+          >
             Reports
           </NavLink>
-          <NavLink to="/config" style={navStyle}>
+          <NavLink
+            to="/config"
+            className={({ isActive }) =>
+              `px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'bg-primary/20 text-primary' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`
+            }
+          >
             Config
           </NavLink>
         </nav>
         <button
+          type="button"
           onClick={handleLogout}
-          style={{
-            marginTop: 24,
-            padding: '8px 16px',
-            background: 'transparent',
-            border: '1px solid #e5e7eb',
-            borderRadius: 6,
-          }}
+          className="mt-auto px-4 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 transition-colors rounded-lg border border-slate-700 hover:border-slate-600"
         >
           Logout
         </button>
       </aside>
-      <main style={{ flex: 1, padding: 24, background: '#f5f5f5' }}>
+      <main className="flex-1 p-6 bg-page overflow-auto">
         <Outlet />
       </main>
     </div>

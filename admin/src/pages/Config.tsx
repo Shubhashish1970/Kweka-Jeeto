@@ -89,52 +89,42 @@ export default function Config() {
   const previewCta = config.flow_cta?.trim() || 'Register';
   const previewCompletion = config.flow_completion_message?.trim() || "Thank you! We've received your details.";
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="text-slate-600">Loading...</p>;
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>Configuration</h1>
-      <p style={{ marginBottom: 16, color: '#6b7280' }}>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Configuration</h1>
+      <p className="text-sm text-slate-600 mb-4 leading-relaxed">
         Configure WhatsApp and Flow settings. These override environment variables when set. Saved in the database and loaded automatically when you open this page; you can change them anytime and click Save to update.
       </p>
-      <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: 480, minWidth: 280, flex: '1 1 400px' }}>
+      <div className="flex flex-wrap gap-8 items-start">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-[480px] min-w-[280px] flex-1">
           {CONFIG_KEYS.map(({ key, label, hint }) => (
-            <div key={key} style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{label}</label>
-              {hint && (
-                <p style={{ marginBottom: 6, fontSize: 13, color: '#6b7280' }}>{hint}</p>
-              )}
+            <div key={key} className="mb-4">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">{label}</label>
+              {hint && <p className="text-sm text-slate-600 mb-1.5">{hint}</p>}
               <input
                 value={config[key] ?? ''}
                 onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: 10,
-                  border: '1px solid #d1d5db',
-                  borderRadius: 6,
-                }}
+                className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           ))}
-          {message && <p style={{ marginBottom: 16, color: message.includes('Failed') ? '#dc2626' : '#059669' }}>{message}</p>}
+          {message && (
+            <p className={`mb-4 text-sm ${message.includes('Failed') ? 'text-red-500' : 'text-green-600'}`}>{message}</p>
+          )}
           <button
+            type="button"
             onClick={handleSave}
             disabled={saving}
-            style={{
-              padding: '10px 24px',
-              background: '#2563eb',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-            }}
+            className="min-h-10 px-6 py-2 bg-primary hover:bg-primary-variant text-white font-bold rounded-2xl text-sm disabled:opacity-70"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
 
-        <div style={{ flex: '0 0 auto', position: 'sticky', top: 24 }}>
-          <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>Preview on WhatsApp</p>
+        <div className="flex-shrink-0 sticky top-6">
+          <p className="text-sm text-slate-600 mb-2">Preview on WhatsApp</p>
           {/* iPhone-style wireframe: thin bezel, Dynamic Island, tall screen */}
           <div
             style={{
@@ -222,7 +212,7 @@ export default function Config() {
               </div>
             </div>
           </div>
-          <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 8 }}>Phone Number ID and Flow ID are not shown to users.</p>
+          <p className="text-xs text-slate-500 mt-2">Phone Number ID and Flow ID are not shown to users.</p>
         </div>
       </div>
     </div>

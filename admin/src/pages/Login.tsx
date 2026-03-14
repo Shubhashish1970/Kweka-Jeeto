@@ -20,52 +20,29 @@ export default function Login() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f5f5f5',
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
       <form
         onSubmit={handleSubmit}
-        style={{
-          background: '#fff',
-          padding: 32,
-          borderRadius: 8,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          width: 320,
-        }}
+        className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8 w-full max-w-[320px]"
       >
-        <h1 style={{ marginBottom: 24, fontSize: 24 }}>🌾 Kweka Jeeto Admin</h1>
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Password</label>
+        <div className="flex items-center gap-3 mb-6">
+          <span className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-slate-900 text-xl">🌾</span>
+          <h1 className="text-xl font-bold text-slate-900">Kweka Jeeto Admin</h1>
+        </div>
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: '100%',
-              padding: 10,
-              border: '1px solid #d1d5db',
-              borderRadius: 6,
-            }}
+            className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
             autoFocus
           />
         </div>
-        {error && <p style={{ color: '#dc2626', marginBottom: 16 }}>{error}</p>}
+        {error && <p className="text-base text-red-500 mb-4">{error}</p>}
         <button
           type="submit"
-          style={{
-            width: '100%',
-            padding: 10,
-            background: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-          }}
+          className="w-full min-h-10 bg-primary hover:bg-primary-variant text-white font-bold rounded-2xl text-sm"
         >
           Login
         </button>

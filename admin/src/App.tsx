@@ -9,7 +9,7 @@ import Config from './pages/Config';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated, authDisabled } = useAuth();
-  if (authenticated === null && !authDisabled) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (authenticated === null && !authDisabled) return <div className="p-6 text-slate-600">Loading...</div>;
   if (!authenticated && !authDisabled) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }

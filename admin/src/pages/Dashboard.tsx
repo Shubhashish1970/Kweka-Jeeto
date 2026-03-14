@@ -23,72 +23,51 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="text-slate-600">Loading...</p>;
   if (error) {
     return (
-      <div>
-        <p style={{ color: '#dc2626', marginBottom: 8 }}>Failed to load</p>
-        <p style={{ color: '#6b7280', fontSize: 14 }}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <p className="text-base text-red-500 mb-2">Failed to load</p>
+        <p className="text-sm text-slate-600">
           {error}. If the admin was deployed via &quot;Deploy to Firebase Hosting on merge&quot;, add GitHub secret <strong>VITE_API_URL</strong> with your Cloud Run backend URL and redeploy.
         </p>
       </div>
     );
   }
-  if (!summary) return <p>Failed to load</p>;
+  if (!summary) return <p className="text-slate-600">Failed to load</p>;
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>Dashboard</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-        <div
-          style={{
-            background: '#fff',
-            padding: 24,
-            borderRadius: 8,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          }}
-        >
-          <p style={{ color: '#6b7280', fontSize: 14 }}>Total Farmers</p>
-          <p style={{ fontSize: 32, fontWeight: 700 }}>{summary.total}</p>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Dashboard</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Total Farmers</p>
+          <p className="text-3xl font-bold text-primary">{summary.total}</p>
         </div>
       </div>
-      <div style={{ marginTop: 32, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <div
-          style={{
-            background: '#fff',
-            padding: 24,
-            borderRadius: 8,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h3 style={{ marginBottom: 16 }}>By Crop</h3>
-          <ul style={{ listStyle: 'none' }}>
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h3 className="text-xl font-bold text-slate-900 mb-4">By Crop</h3>
+          <ul className="divide-y divide-slate-100">
             {Object.entries(summary.byCrop).map(([crop, count]) => (
-              <li key={crop} style={{ padding: '8px 0', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}>
+              <li key={crop} className="py-3 flex justify-between text-sm text-slate-700">
                 <span>{crop}</span>
-                <span>{count}</span>
+                <span className="font-medium">{count}</span>
               </li>
             ))}
-            {Object.keys(summary.byCrop).length === 0 && <li style={{ color: '#6b7280' }}>No data yet</li>}
+            {Object.keys(summary.byCrop).length === 0 && <li className="py-3 text-slate-500 text-sm">No data yet</li>}
           </ul>
         </div>
-        <div
-          style={{
-            background: '#fff',
-            padding: 24,
-            borderRadius: 8,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h3 style={{ marginBottom: 16 }}>By State</h3>
-          <ul style={{ listStyle: 'none' }}>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h3 className="text-xl font-bold text-slate-900 mb-4">By State</h3>
+          <ul className="divide-y divide-slate-100">
             {Object.entries(summary.byState).map(([state, count]) => (
-              <li key={state} style={{ padding: '8px 0', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}>
+              <li key={state} className="py-3 flex justify-between text-sm text-slate-700">
                 <span>{state}</span>
-                <span>{count}</span>
+                <span className="font-medium">{count}</span>
               </li>
             ))}
-            {Object.keys(summary.byState).length === 0 && <li style={{ color: '#6b7280' }}>No data yet</li>}
+            {Object.keys(summary.byState).length === 0 && <li className="py-3 text-slate-500 text-sm">No data yet</li>}
           </ul>
         </div>
       </div>

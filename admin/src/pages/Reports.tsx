@@ -23,18 +23,18 @@ export default function Reports() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="text-slate-600">Loading...</p>;
   if (error) {
     return (
-      <div>
-        <p style={{ color: '#dc2626', marginBottom: 8 }}>Failed to load</p>
-        <p style={{ color: '#6b7280', fontSize: 14 }}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <p className="text-base text-red-500 mb-2">Failed to load</p>
+        <p className="text-sm text-slate-600">
           {error}. If the admin was deployed via &quot;Deploy to Firebase Hosting on merge&quot;, add GitHub secret <strong>VITE_API_URL</strong> with your Cloud Run backend URL and redeploy.
         </p>
       </div>
     );
   }
-  if (!summary) return <p>Failed to load</p>;
+  if (!summary) return <p className="text-slate-600">Failed to load</p>;
 
   const cropEntries = Object.entries(summary.byCrop).sort((a, b) => b[1] - a[1]);
   const stateEntries = Object.entries(summary.byState).sort((a, b) => b[1] - a[1]);
@@ -43,42 +43,24 @@ export default function Reports() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>Reports</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <div
-          style={{
-            background: '#fff',
-            padding: 24,
-            borderRadius: 8,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h3 style={{ marginBottom: 16 }}>Registrations by Crop</h3>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Reports</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h3 className="text-xl font-bold text-slate-900 mb-4">Registrations by Crop</h3>
           {cropEntries.length === 0 ? (
-            <p style={{ color: '#6b7280' }}>No data yet</p>
+            <p className="text-slate-500 text-sm">No data yet</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-3">
               {cropEntries.map(([crop, count]) => (
                 <div key={crop}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div className="flex justify-between text-sm text-slate-700 mb-1">
                     <span>{crop}</span>
-                    <span>{count}</span>
+                    <span className="font-medium">{count}</span>
                   </div>
-                  <div
-                    style={{
-                      height: 8,
-                      background: '#e5e7eb',
-                      borderRadius: 4,
-                      overflow: 'hidden',
-                    }}
-                  >
+                  <div className="h-2 bg-slate-200 rounded overflow-hidden">
                     <div
-                      style={{
-                        width: `${(count / maxCrop) * 100}%`,
-                        height: '100%',
-                        background: '#2563eb',
-                        borderRadius: 4,
-                      }}
+                      className="h-full bg-primary rounded"
+                      style={{ width: `${(count / maxCrop) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -86,40 +68,22 @@ export default function Reports() {
             </div>
           )}
         </div>
-        <div
-          style={{
-            background: '#fff',
-            padding: 24,
-            borderRadius: 8,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h3 style={{ marginBottom: 16 }}>Registrations by State</h3>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h3 className="text-xl font-bold text-slate-900 mb-4">Registrations by State</h3>
           {stateEntries.length === 0 ? (
-            <p style={{ color: '#6b7280' }}>No data yet</p>
+            <p className="text-slate-500 text-sm">No data yet</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-3">
               {stateEntries.map(([state, count]) => (
                 <div key={state}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div className="flex justify-between text-sm text-slate-700 mb-1">
                     <span>{state}</span>
-                    <span>{count}</span>
+                    <span className="font-medium">{count}</span>
                   </div>
-                  <div
-                    style={{
-                      height: 8,
-                      background: '#e5e7eb',
-                      borderRadius: 4,
-                      overflow: 'hidden',
-                    }}
-                  >
+                  <div className="h-2 bg-slate-200 rounded overflow-hidden">
                     <div
-                      style={{
-                        width: `${(count / maxState) * 100}%`,
-                        height: '100%',
-                        background: '#059669',
-                        borderRadius: 4,
-                      }}
+                      className="h-full bg-primary rounded"
+                      style={{ width: `${(count / maxState) * 100}%` }}
                     />
                   </div>
                 </div>

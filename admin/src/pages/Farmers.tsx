@@ -50,84 +50,89 @@ export default function Farmers() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>Farmers</h1>
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <input
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: 8, border: '1px solid #d1d5db', borderRadius: 6 }}
-        />
-        <input
-          placeholder="State"
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-          style={{ padding: 8, border: '1px solid #d1d5db', borderRadius: 6 }}
-        />
-        <input
-          placeholder="Crop"
-          value={crop}
-          onChange={(e) => setCrop(e.target.value)}
-          style={{ padding: 8, border: '1px solid #d1d5db', borderRadius: 6 }}
-        />
-        <button
-          onClick={handleExport}
-          style={{ padding: '8px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6 }}
-        >
-          Export CSV
-        </button>
-      </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#f9fafb' }}>
-                  <th style={{ padding: 12, textAlign: 'left' }}>Name</th>
-                  <th style={{ padding: 12, textAlign: 'left' }}>Age</th>
-                  <th style={{ padding: 12, textAlign: 'left' }}>State</th>
-                  <th style={{ padding: 12, textAlign: 'left' }}>District</th>
-                  <th style={{ padding: 12, textAlign: 'left' }}>Crop</th>
-                  <th style={{ padding: 12, textAlign: 'left' }}>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {farmers.map((f) => (
-                  <tr key={f._id} style={{ borderTop: '1px solid #eee' }}>
-                    <td style={{ padding: 12 }}>{f.farmer_name}</td>
-                    <td style={{ padding: 12 }}>{f.age}</td>
-                    <td style={{ padding: 12 }}>{f.state}</td>
-                    <td style={{ padding: 12 }}>{f.district}</td>
-                    <td style={{ padding: 12 }}>{f.crop}</td>
-                    <td style={{ padding: 12 }}>{new Date(f.createdAt).toLocaleDateString()}</td>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Farmers</h1>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 min-w-0 overflow-hidden">
+        <div className="flex flex-wrap gap-3 mb-4">
+          <input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+          <input
+            placeholder="State"
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+            className="min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+          <input
+            placeholder="Crop"
+            value={crop}
+            onChange={(e) => setCrop(e.target.value)}
+            className="min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+          <button
+            type="button"
+            onClick={handleExport}
+            className="min-h-10 px-4 py-2 bg-primary hover:bg-primary-variant text-white font-bold rounded-2xl text-sm"
+          >
+            Export CSV
+          </button>
+        </div>
+        {loading ? (
+          <p className="text-slate-600 text-sm">Loading...</p>
+        ) : (
+          <>
+            <div className="rounded-2xl border border-slate-200 overflow-hidden">
+              <table className="w-full border-collapse">
+                <thead className="bg-slate-100 sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Name</th>
+                    <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Age</th>
+                    <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">State</th>
+                    <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">District</th>
+                    <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Crop</th>
+                    <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ color: '#6b7280' }}>Total: {total}</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-                style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: 6, background: '#fff' }}
-              >
-                Previous
-              </button>
-              <button
-                disabled={page * 20 >= total}
-                onClick={() => setPage((p) => p + 1)}
-                style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: 6, background: '#fff' }}
-              >
-                Next
-              </button>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {farmers.map((f) => (
+                    <tr key={f._id} className="hover:bg-slate-50">
+                      <td className="px-3 py-2 text-sm text-slate-900 font-medium">{f.farmer_name}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700">{f.age}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700">{f.state}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700">{f.district}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700">{f.crop}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700">{new Date(f.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </>
-      )}
+            <div className="mt-4 flex justify-between items-center">
+              <p className="text-sm text-slate-600">Total: {total}</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="min-h-10 px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={page * 20 >= total}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="min-h-10 px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
