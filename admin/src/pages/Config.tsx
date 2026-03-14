@@ -152,8 +152,8 @@ export default function Config() {
             <div style={{ position: 'absolute', left: -2, top: 182, width: 2, height: 28, background: '#1a1a1a', borderRadius: 1 }} />
             {/* Right side button (power) */}
             <div style={{ position: 'absolute', right: -2, top: 120, width: 2, height: 48, background: '#1a1a1a', borderRadius: 1 }} />
-            {/* Screen - taller for sleek phone proportion */}
-            <div style={{ background: '#fff', borderRadius: 34, overflow: 'hidden', minHeight: 560, position: 'relative' }}>
+            {/* Screen - flex column so chat area fills remaining height */}
+            <div style={{ background: '#fff', borderRadius: 34, overflow: 'hidden', minHeight: 560, position: 'relative', display: 'flex', flexDirection: 'column' }}>
               {/* Dynamic Island - pill cutout */}
               <div
                 style={{
@@ -168,41 +168,42 @@ export default function Config() {
                   zIndex: 2,
                 }}
               />
-              <div style={{ padding: '40px 16px 12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534' }}>
+              <div style={{ padding: '40px 16px 12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534', flexShrink: 0 }}>
                 Kweka Jeeto
               </div>
-              <div style={{ padding: '12px 10px 12px 10px', background: '#e5e5e5' }}>
-                <div
-                  style={{
-                    marginLeft: 0,
-                    marginRight: '4%',
-                    width: '96%',
-                    background: '#fff',
-                    borderRadius: '12px 12px 12px 4px',
-                    padding: '8px 12px 10px 12px',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-                  }}
-                >
-                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6, color: '#111', lineHeight: 1.35 }}>{previewHeader}</div>
-                  <div style={{ fontSize: 14, color: '#374151', marginBottom: 10, lineHeight: 1.4 }}>{previewBody}</div>
+              <div style={{ padding: '12px 10px 12px 10px', background: '#e5e5e5', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 0 }}>
+                <div>
                   <div
                     style={{
-                      display: 'inline-block',
-                      padding: '8px 16px',
-                      background: '#25D366',
-                      color: '#fff',
-                      borderRadius: 8,
-                      fontSize: 14,
-                      fontWeight: 500,
+                      marginLeft: 0,
+                      marginRight: '4%',
+                      width: '96%',
+                      background: '#fff',
+                      borderRadius: '12px 12px 12px 4px',
+                      padding: '8px 12px 10px 12px',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
                     }}
                   >
-                    {previewCta}
+                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6, color: '#111', lineHeight: 1.35 }}>{previewHeader}</div>
+                    <div style={{ fontSize: 14, color: '#374151', marginBottom: 10, lineHeight: 1.4 }}>{previewBody}</div>
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        padding: '8px 16px',
+                        background: '#25D366',
+                        color: '#fff',
+                        borderRadius: 8,
+                        fontSize: 14,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {previewCta}
+                    </div>
                   </div>
+                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>Tap button to open flow</div>
                 </div>
-                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>Tap button to open flow</div>
                 <div
                   style={{
-                    marginTop: 10,
                     marginLeft: 0,
                     marginRight: '4%',
                     width: '96%',
