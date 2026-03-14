@@ -160,7 +160,7 @@ export default function Config() {
             <div style={{ position: 'absolute', left: -2, top: 148, width: 2, height: 28, background: '#1a1a1a', borderRadius: 1 }} />
             <div style={{ position: 'absolute', left: -2, top: 182, width: 2, height: 28, background: '#1a1a1a', borderRadius: 1 }} />
             <div style={{ position: 'absolute', right: -2, top: 120, width: 2, height: 48, background: '#1a1a1a', borderRadius: 1 }} />
-            <div style={{ background: '#fff', borderRadius: 34, overflow: 'hidden', height: 900, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ background: '#fff', borderRadius: 34, overflow: 'hidden', height: 700, position: 'relative', display: 'flex', flexDirection: 'column' }}>
               <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', width: 88, height: 24, borderRadius: 12, background: '#000', zIndex: 2 }} />
               <div style={{ padding: '40px 16px 12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534', flexShrink: 0 }}>
                 Kweka Jeeto
