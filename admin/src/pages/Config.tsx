@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 
+// Defaults when nothing is saved in DB (match backend defaults in message.service / flow-response)
+const DEFAULT_CONFIG: Record<string, string> = {
+  flow_cta: 'Register',
+  flow_header: 'कृषि सलाह / Agri Advisory',
+  flow_body: 'Register to get crop advisory.',
+  flow_completion_message: "Thank you! We've received your details.",
+  whatsapp_phone_number_id: '',
+  flow_id: '',
+};
+
 const CONFIG_KEYS = [
   {
     key: 'flow_cta',
@@ -53,7 +63,8 @@ export default function Config() {
         const out: Record<string, string> = {};
         for (const k of CONFIG_KEYS) {
           const v = r[k.key];
-          out[k.key] = v != null ? String(v) : '';
+          const raw = v != null ? String(v).trim() : '';
+          out[k.key] = raw !== '' ? raw : (DEFAULT_CONFIG[k.key] ?? '');
         }
         setConfig(out);
       })
@@ -84,7 +95,7 @@ export default function Config() {
     <div>
       <h1 style={{ marginBottom: 24 }}>Configuration</h1>
       <p style={{ marginBottom: 16, color: '#6b7280' }}>
-        Configure WhatsApp and Flow settings. These override environment variables when set.
+        Configure WhatsApp and Flow settings. These override environment variables when set. Saved in the database and loaded automatically when you open this page; you can change them anytime and click Save to update.
       </p>
       <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: 480, minWidth: 280, flex: '1 1 400px' }}>
