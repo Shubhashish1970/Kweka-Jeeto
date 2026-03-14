@@ -14,11 +14,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function LoginOrRedirect() {
+  const { authDisabled } = useAuth();
+  if (authDisabled) return <Navigate to="/" replace />;
+  return <Login />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginOrRedirect />} />
         <Route
           path="/"
           element={

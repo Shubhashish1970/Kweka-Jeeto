@@ -82,10 +82,18 @@ jobs:
       - name: Install admin deps
         run: cd admin && npm ci
 
+      - name: Require VITE_API_URL for admin build
+        run: |
+          if [ -z "${{ secrets.VITE_API_URL }}" ]; then
+            echo "::error::VITE_API_URL secret is not set. Set it to your Cloud Run URL (e.g. https://kweka-jeeto-XXXX.asia-south1.run.app) in Settings → Secrets → Actions."
+            exit 1
+          fi
+
       - name: Build admin
         run: npm run build:admin
         env:
-          VITE_API_URL: ${{ needs.deploy-backend.outputs.url }}
+          # Use secret so admin gets correct API URL (job output 'url' is skipped by GitHub when it looks like a secret)
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_ADMIN_AUTH_DISABLED: 'true'
 
       - name: Install Firebase CLI

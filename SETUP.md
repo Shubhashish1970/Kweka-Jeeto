@@ -47,7 +47,11 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 
 **Note:** Admin is deployed using the same **GCP_SA_KEY** as the backend. The service account must have **Firebase Hosting Admin** (or **Firebase Admin**) role on the Firebase project — add it in Firebase Console → Project Settings → Users and permissions, or in GCP IAM. `FIREBASE_TOKEN` is no longer used.
 
-If you use the **Deploy to Firebase Hosting on merge** workflow (in addition to or instead of the main **Deploy** workflow), add secret **VITE_API_URL** with your Cloud Run backend URL (e.g. `https://kweka-jeeto-744226784105.asia-south1.run.app`) so that Dashboard and Reports can load. The main **Deploy** workflow sets this automatically from the backend deploy output.
+- **`FIREBASE_SERVICE_ACCOUNT_KWEKA_JEETO`** (optional): Used only by the workflows **Deploy to Firebase Hosting on merge** and **Deploy to Firebase Hosting on PR**. Kept by choice. **Do not use this secret or those workflows in any subsequent step or doc without explicit user signoff.** All future deployments must use **GCP_SA_KEY** and **`firebase deploy --only hosting`** (see project rule).
+
+**Firebase Hosting workflows (no app dependency):** The workflows **Deploy to Firebase Hosting on merge** and **Deploy to Firebase Hosting on PR** do **not** affect any app functionality. The live admin app is deployed by the main **Deploy** workflow (push to `main`) using **GCP_SA_KEY**. The Firebase Hosting workflows are optional: "on merge" is a second path that also deploys to Hosting on push to `main`; "on PR" only creates preview URLs for pull requests. You can enable, disable, or remove them without changing how the app behaves.
+
+**`VITE_API_URL`** (required for admin): Set to your Cloud Run backend URL so the admin app can call the API. The main **Deploy** workflow uses this secret when building the admin (GitHub redacts the job output URL, so the secret is the reliable source). Get the exact URL from **GCP Console → Cloud Run → your service → copy the URL** (e.g. `https://kweka-jeeto-744226784105.asia-south1.run.app`, no trailing slash). If Dashboard/Reports show "Backend returned HTML instead of JSON", ensure this secret matches the live Cloud Run URL and redeploy.
 
 ---
 
