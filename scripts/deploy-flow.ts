@@ -166,34 +166,54 @@ const run = async () => {
       console.error(WABA_HELP);
       process.exit(1);
     }
-    console.log('Step 2 OK: WABA access confirmed. Creating flow...');
+    console.log('Step 2 OK: WABA access confirmed. Creating flow (draft first)...');
 
     const flowName = sanitizeFlowName(`farmer_registration_poc_${randomFlowSuffix()}`);
     console.log('Flow name (unique per run):', flowName);
 
-    const res = await axios.post(
+    // Create flow as DRAFT so we can fetch validation_errors before publishing (per Meta Flows API)
+    const createRes = await axios.post(
       `${GRAPH_API}/${effectiveWabaId}/flows`,
       {
         name: flowName,
         categories: ['LEAD_GENERATION'],
         flow_json: flowJson,
-        publish: true,
+        publish: false,
       },
       { headers }
     );
 
-    const flowId = res.data?.id;
-    if (flowId) {
-      console.log('Flow published successfully!');
-      console.log('Flow name:', flowName);
-      console.log(`FLOW_ID=${flowId}`);
-      fs.writeFileSync(path.join(__dirname, '../.flow_id'), flowId, 'utf-8');
-      fs.writeFileSync(path.join(__dirname, '../.flow_name'), flowName, 'utf-8');
-      process.exit(0);
-    } else {
-      console.error('Unexpected response:', JSON.stringify(res.data, null, 2));
+    const flowId = createRes.data?.id;
+    if (!flowId) {
+      console.error('Create response missing id:', JSON.stringify(createRes.data, null, 2));
       process.exit(1);
     }
+
+    // validation_errors can be in create response or from GET details (see https://developers.facebook.com/docs/whatsapp/flows/reference/flowsapi#details)
+    let validationErrors: unknown[] = (createRes.data as { validation_errors?: unknown[] }).validation_errors ?? [];
+    if (validationErrors.length === 0) {
+      const detailsRes = await axios.get(
+        `${GRAPH_API}/${flowId}?fields=validation_errors`,
+        { headers }
+      ).catch(() => null);
+      validationErrors = (detailsRes?.data as { validation_errors?: unknown[] })?.validation_errors ?? [];
+    }
+    if (validationErrors.length > 0) {
+      console.error('Flow JSON validation errors (fix these before publishing):');
+      console.error(JSON.stringify(validationErrors, null, 2));
+      console.error('See https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes/');
+      process.exit(1);
+    }
+
+    console.log('Flow created (draft), no validation errors. Publishing...');
+    await axios.post(`${GRAPH_API}/${flowId}/publish`, {}, { headers });
+
+    console.log('Flow published successfully!');
+    console.log('Flow name:', flowName);
+    console.log(`FLOW_ID=${flowId}`);
+    fs.writeFileSync(path.join(__dirname, '../.flow_id'), flowId, 'utf-8');
+    fs.writeFileSync(path.join(__dirname, '../.flow_name'), flowName, 'utf-8');
+    process.exit(0);
   } catch (err: unknown) {
     const ax = err as { response?: { status?: number; data?: unknown } };
     if (ax.response) {

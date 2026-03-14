@@ -26,7 +26,9 @@
             "on-click-action": {
               "name": "navigate",
               "next": { "type": "screen", "name": "FARMER_DETAILS" },
-              "payload": {}
+              "payload": {
+                "entry_point": "welcome"
+              }
             }
           }
         ]
@@ -35,7 +37,9 @@
     {
       "id": "FARMER_DETAILS",
       "title": "Farmer Details",
-      "data": {},
+      "data": {
+        "entry_point": { "type": "string", "__example__": "welcome" }
+      },
       "layout": {
         "type": "SingleColumnLayout",
         "children": [
