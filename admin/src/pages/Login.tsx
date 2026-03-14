@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import Button from '../components/shared/Button';
 
 export default function Login() {
   const [password, setPassword] = useState('');
@@ -35,17 +36,14 @@ export default function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
             autoFocus
           />
         </div>
         {error && <p className="text-base text-red-500 mb-4">{error}</p>}
-        <button
-          type="submit"
-          className="w-full min-h-10 bg-primary hover:bg-primary-variant text-white font-bold rounded-2xl text-sm"
-        >
+        <Button type="submit" className="w-full">
           Login
-        </button>
+        </Button>
       </form>
     </div>
   );

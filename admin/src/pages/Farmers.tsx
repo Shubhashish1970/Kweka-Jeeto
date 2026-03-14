@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import GlobalMessageBar from '../components/shared/GlobalMessageBar';
+import Button from '../components/shared/Button';
+import { PAGE_INFO_BANNERS } from '../constants/pageInfoBanners';
 
 interface Farmer {
   _id: string;
@@ -48,8 +51,11 @@ export default function Farmers() {
     a.click();
   };
 
+  const banner = PAGE_INFO_BANNERS.farmers;
+
   return (
     <div>
+      <GlobalMessageBar title={banner.title} description={banner.description} className="mb-4" />
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Farmers</h1>
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 min-w-0 overflow-hidden">
         <div className="flex flex-wrap gap-3 mb-4">
@@ -71,13 +77,9 @@ export default function Farmers() {
             onChange={(e) => setCrop(e.target.value)}
             className="min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
-          <button
-            type="button"
-            onClick={handleExport}
-            className="min-h-10 px-4 py-2 bg-primary hover:bg-primary-variant text-white font-bold rounded-2xl text-sm"
-          >
+          <Button type="button" onClick={handleExport}>
             Export CSV
-          </button>
+          </Button>
         </div>
         {loading ? (
           <p className="text-slate-600 text-sm">Loading...</p>
@@ -112,22 +114,22 @@ export default function Farmers() {
             <div className="mt-4 flex justify-between items-center">
               <p className="text-sm text-slate-600">Total: {total}</p>
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
-                  className="min-h-10 px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-lg"
                 >
                   Previous
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
                   disabled={page * 20 >= total}
                   onClick={() => setPage((p) => p + 1)}
-                  className="min-h-10 px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-lg"
                 >
                   Next
-                </button>
+                </Button>
               </div>
             </div>
           </>

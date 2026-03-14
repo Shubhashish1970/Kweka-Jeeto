@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import GlobalMessageBar from '../components/shared/GlobalMessageBar';
+import Button from '../components/shared/Button';
+import { PAGE_INFO_BANNERS } from '../constants/pageInfoBanners';
 
 interface Summary {
   total: number;
@@ -12,25 +15,47 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
+    setError(null);
     api
       .get<Summary>('/reports/summary')
       .then((data) => {
         setSummary(data);
-        setError(null);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Backend unreachable'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
-  if (loading) return <p className="text-slate-600">Loading...</p>;
+  const banner = PAGE_INFO_BANNERS.dashboard;
+
+  if (loading && !summary) {
+    return (
+      <div>
+        <GlobalMessageBar title={banner.title} description={banner.description} className="mb-4" />
+        <p className="text-slate-600">Loading...</p>
+      </div>
+    );
+  }
   if (error) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <p className="text-base text-red-500 mb-2">Failed to load</p>
-        <p className="text-sm text-slate-600">
-          {error}. If the admin was deployed via &quot;Deploy to Firebase Hosting on merge&quot;, add GitHub secret <strong>VITE_API_URL</strong> with your Cloud Run backend URL and redeploy.
-        </p>
+      <div>
+        <GlobalMessageBar title={banner.title} description={banner.description} className="mb-4" />
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <p className="text-base text-red-500 mb-2 flex items-center gap-2">
+            <span aria-hidden>⚠</span> Failed to load
+          </p>
+          <p className="text-sm text-slate-600 mb-4">
+            {error}. If the admin was deployed via &quot;Deploy to Firebase Hosting on merge&quot;, add GitHub secret <strong>VITE_API_URL</strong> with your Cloud Run backend URL and redeploy.
+          </p>
+          <Button variant="secondary" onClick={load} className="bg-slate-200 text-slate-600 border-slate-200">
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
@@ -38,6 +63,7 @@ export default function Dashboard() {
 
   return (
     <div>
+      <GlobalMessageBar title={banner.title} description={banner.description} className="mb-4" />
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Dashboard</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">

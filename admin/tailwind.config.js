@@ -13,9 +13,10 @@ export default {
         'on-surface': '#1C1917',
         'on-surface-variant': '#57534E',
         outline: '#E7E5E4',
+        accent: '#D97706',
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
       },
     },
   },

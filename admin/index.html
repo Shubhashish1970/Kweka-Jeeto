@@ -7,6 +7,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <title>Kweka Jeeto - Admin</title>
+    <style>
+      /* Reference zoom: match 90% Chrome look at 100% browser zoom (UI_STANDARDS) */
+      @supports (zoom: 1) {
+        html { zoom: 0.9; }
+      }
+      @supports not (zoom: 1) {
+        html { transform: scale(0.9); transform-origin: top left; width: 111.111vw; min-height: 111.111vh; overflow-x: hidden; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

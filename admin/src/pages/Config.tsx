@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import GlobalMessageBar from '../components/shared/GlobalMessageBar';
+import Button from '../components/shared/Button';
+import { PAGE_INFO_BANNERS } from '../constants/pageInfoBanners';
 
 // Defaults when nothing is saved in DB (match backend defaults in message.service / flow-response)
 const DEFAULT_CONFIG: Record<string, string> = {
@@ -95,11 +98,14 @@ export default function Config() {
 
   if (loading) return <p className="text-slate-600">Loading...</p>;
 
+  const banner = PAGE_INFO_BANNERS.config;
+
   return (
     <div>
+      <GlobalMessageBar title={banner.title} description={banner.description} className="mb-4" />
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Configuration</h1>
       <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-        Configure WhatsApp and Flow settings. These override environment variables when set. Saved in the database and loaded automatically when you open this page; you can change them anytime and click Save to update.
+        Configure WhatsApp and Flow settings. Saved in the database and loaded automatically; change values and click Save to update.
       </p>
       <div className="flex flex-wrap gap-8 items-start">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-[480px] min-w-[280px] flex-1">
@@ -117,14 +123,9 @@ export default function Config() {
           {message && (
             <p className={`mb-4 text-sm ${message.includes('Failed') ? 'text-red-500' : 'text-green-600'}`}>{message}</p>
           )}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="min-h-10 px-6 py-2 bg-primary hover:bg-primary-variant text-white font-bold rounded-2xl text-sm disabled:opacity-70"
-          >
+          <Button type="button" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save'}
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1 min-w-[280px] flex flex-col items-center sticky top-6">
