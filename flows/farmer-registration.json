@@ -21,19 +21,13 @@
             "text": "Now get all the help on your farms and crops on WhatsApp by the press of a button."
           },
           {
-            "type": "Form",
-            "name": "welcome_form",
-            "children": [
-              {
-                "type": "Footer",
-                "label": "Continue",
-                "on-click-action": {
-                  "name": "navigate",
-                  "next": { "type": "screen", "name": "FARMER_DETAILS" },
-                  "payload": {}
-                }
-              }
-            ]
+            "type": "Footer",
+            "label": "Continue",
+            "on-click-action": {
+              "name": "navigate",
+              "next": { "type": "screen", "name": "FARMER_DETAILS" },
+              "payload": {}
+            }
           }
         ]
       }
