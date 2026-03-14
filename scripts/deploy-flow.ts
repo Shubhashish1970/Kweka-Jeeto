@@ -240,7 +240,7 @@ const run = async () => {
         console.error('');
         console.error('=== Flow JSON validation errors (from API response) ===');
         console.error('Docs: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes/');
-        data.validation_errors.forEach((e: { error?: string; message?: string; path?: string; pointers?: Array<{ path?: string; line_start?: number; line_end?: number }> }, i: number) => {
+        (data.validation_errors as Array<{ error?: string; message?: string; path?: string; pointers?: Array<{ path?: string; line_start?: number; line_end?: number }> }>).forEach((e, i) => {
           console.error(`[${i + 1}] ${e.error ?? 'ERROR'}: ${e.message ?? ''}`);
           const path = e.pointers?.[0]?.path ?? e.path;
           if (path) console.error(`    path: ${path}`);
