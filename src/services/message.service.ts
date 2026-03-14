@@ -32,14 +32,18 @@ const getFlowBody = async (): Promise<string> => {
 
 export const sendFlowMessage = async (to: string): Promise<boolean> => {
   try {
-    const phoneNumberId = await getPhoneNumberId();
-    const flowId = await getFlowId();
+    const phoneNumberId = (await getPhoneNumberId())?.trim();
+    const flowId = (await getFlowId())?.trim();
     const flowCta = await getFlowCta();
     const flowHeader = await getFlowHeader();
     const flowBody = await getFlowBody();
 
+    if (!phoneNumberId) {
+      logger.error('WHATSAPP_PHONE_NUMBER_ID not configured. Set it in env or Admin Config.');
+      return false;
+    }
     if (!flowId) {
-      logger.error('FLOW_ID not configured. Run npm run deploy:flow first.');
+      logger.error('FLOW_ID not configured. Run npm run deploy:flow and set FLOW_ID in env or Admin Config.');
       return false;
     }
 
@@ -74,10 +78,10 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
     logger.info('Flow message sent to', to);
     return true;
   } catch (err: unknown) {
-    const msg = err && typeof err === 'object' && 'response' in err
-      ? (err as { response?: { data?: unknown } }).response?.data
-      : err;
-    logger.error('Failed to send flow message:', msg);
+    const ax = err && typeof err === 'object' && 'response' in err ? (err as { response?: { status?: number; data?: unknown } }) : null;
+    const status = ax?.response?.status;
+    const data = ax?.response?.data;
+    logger.error('Failed to send flow message:', status ? `HTTP ${status}` : '', data ?? err);
     return false;
   }
 };
