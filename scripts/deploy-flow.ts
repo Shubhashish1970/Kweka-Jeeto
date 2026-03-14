@@ -199,9 +199,24 @@ const run = async () => {
       validationErrors = (detailsRes?.data as { validation_errors?: unknown[] })?.validation_errors ?? [];
     }
     if (validationErrors.length > 0) {
-      console.error('Flow JSON validation errors (fix these before publishing):');
+      console.error('');
+      console.error('=== Flow JSON validation errors (fix in flows/farmer-registration.json) ===');
+      console.error('Docs: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes/');
+      console.error('');
+      (validationErrors as Array<{ error?: string; message?: string; path?: string; pointers?: Array<{ path?: string; line_start?: number; line_end?: number }> }>).forEach((e, i) => {
+        console.error(`[${i + 1}] ${e.error ?? 'ERROR'}: ${e.message ?? ''}`);
+        const path = e.pointers?.[0]?.path ?? e.path;
+        if (path) console.error(`    path: ${path}`);
+        if (e.pointers?.[0]) {
+          const p = e.pointers[0];
+          if (p.line_start != null) console.error(`    lines: ${p.line_start}-${p.line_end ?? p.line_start}`);
+        }
+        console.error('');
+      });
+      console.error('--- Full validation_errors JSON (for CI/logs) ---');
       console.error(JSON.stringify(validationErrors, null, 2));
-      console.error('See https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes/');
+      console.error('=== End validation errors ===');
+      console.error('');
       process.exit(1);
     }
 
@@ -217,10 +232,28 @@ const run = async () => {
   } catch (err: unknown) {
     const ax = err as { response?: { status?: number; data?: unknown } };
     if (ax.response) {
-      console.error('Meta API error:', ax.response.status, JSON.stringify(ax.response.data, null, 2));
+      const data = ax.response.data as { error?: { message?: string }; validation_errors?: unknown[] };
+      console.error('');
+      console.error('Meta API error:', ax.response.status, data?.error?.message ?? '');
+      console.error(JSON.stringify(ax.response.data, null, 2));
+      if (Array.isArray(data?.validation_errors) && data.validation_errors.length > 0) {
+        console.error('');
+        console.error('=== Flow JSON validation errors (from API response) ===');
+        console.error('Docs: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes/');
+        data.validation_errors.forEach((e: { error?: string; message?: string; path?: string; pointers?: Array<{ path?: string; line_start?: number; line_end?: number }> }, i: number) => {
+          console.error(`[${i + 1}] ${e.error ?? 'ERROR'}: ${e.message ?? ''}`);
+          const path = e.pointers?.[0]?.path ?? e.path;
+          if (path) console.error(`    path: ${path}`);
+          if (e.pointers?.[0]?.line_start != null) console.error(`    lines: ${e.pointers[0].line_start}-${e.pointers[0].line_end ?? e.pointers[0].line_start}`);
+          console.error('');
+        });
+        console.error('--- Full validation_errors JSON ---');
+        console.error(JSON.stringify(data.validation_errors, null, 2));
+      }
       if (isMetaPermissionError(ax.response.data)) {
         console.error(WABA_HELP);
       }
+      console.error('');
     } else {
       console.error('Deploy failed:', err);
     }
