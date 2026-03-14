@@ -135,40 +135,40 @@ export default function Config() {
 
         <div style={{ flex: '0 0 auto', position: 'sticky', top: 24 }}>
           <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>Preview on WhatsApp</p>
-          {/* iPhone-style wireframe: bezel, Dynamic Island, screen */}
+          {/* iPhone-style wireframe: thin bezel, Dynamic Island, tall screen */}
           <div
             style={{
-              width: 280,
+              width: 272,
               background: '#000',
-              borderRadius: 36,
-              padding: 10,
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)',
+              borderRadius: 38,
+              padding: 4,
+              boxShadow: '0 20px 40px -12px rgba(0,0,0,0.25)',
               position: 'relative',
             }}
           >
-            {/* Left side buttons (volume) */}
-            <div style={{ position: 'absolute', left: -3, top: 100, width: 3, height: 24, background: '#333', borderRadius: 2 }} />
-            <div style={{ position: 'absolute', left: -3, top: 132, width: 3, height: 36, background: '#333', borderRadius: 2 }} />
-            <div style={{ position: 'absolute', left: -3, top: 176, width: 3, height: 36, background: '#333', borderRadius: 2 }} />
+            {/* Left side buttons (volume) - thin lines */}
+            <div style={{ position: 'absolute', left: -2, top: 120, width: 2, height: 20, background: '#1a1a1a', borderRadius: 1 }} />
+            <div style={{ position: 'absolute', left: -2, top: 148, width: 2, height: 28, background: '#1a1a1a', borderRadius: 1 }} />
+            <div style={{ position: 'absolute', left: -2, top: 182, width: 2, height: 28, background: '#1a1a1a', borderRadius: 1 }} />
             {/* Right side button (power) */}
-            <div style={{ position: 'absolute', right: -3, top: 100, width: 3, height: 56, background: '#333', borderRadius: 2 }} />
-            {/* Screen */}
-            <div style={{ background: '#fff', borderRadius: 28, overflow: 'hidden', minHeight: 420, position: 'relative' }}>
-              {/* Dynamic Island */}
+            <div style={{ position: 'absolute', right: -2, top: 120, width: 2, height: 48, background: '#1a1a1a', borderRadius: 1 }} />
+            {/* Screen - taller for sleek phone proportion */}
+            <div style={{ background: '#fff', borderRadius: 34, overflow: 'hidden', minHeight: 560, position: 'relative' }}>
+              {/* Dynamic Island - pill cutout */}
               <div
                 style={{
                   position: 'absolute',
-                  top: 12,
+                  top: 10,
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  width: 100,
-                  height: 28,
-                  borderRadius: 14,
+                  width: 88,
+                  height: 24,
+                  borderRadius: 12,
                   background: '#000',
                   zIndex: 2,
                 }}
               />
-              <div style={{ padding: '44px 16px 12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534' }}>
+              <div style={{ padding: '40px 16px 12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534' }}>
                 Kweka Jeeto
               </div>
               <div style={{ padding: 16, background: '#e5e5e5' }}>
