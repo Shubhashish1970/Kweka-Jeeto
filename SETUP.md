@@ -17,6 +17,7 @@ Add these in your GitHub repository: **Settings → Secrets and variables → Ac
 | `WHATSAPP_VERIFY_TOKEN` | Webhook verification token (you choose) | Create a random string, e.g. `prod-verify-xyz-123` |
 | `WABA_ID` | WhatsApp Business Account ID (optional for Deploy Flow) | From Meta → WhatsApp → API Setup. If not set, Deploy Flow tries to resolve WABA from the token (needs `business_management` + `whatsapp_business_management`) or from **WHATSAPP_PHONE_NUMBER_ID** when you have multiple WABAs. |
 | `FLOW_ID` | Flow ID (obtained from Deploy Flow workflow) | Run **Deploy Flow** workflow once → add printed FLOW_ID to secrets |
+| `CRON_SECRET` | Secret for cron endpoints (daily advisory) | Optional. Generate e.g. `openssl rand -base64 24`. Set in GitHub Secrets; use same value in Cloud Scheduler when calling POST /internal/daily-advisory. |
 
 ### MongoDB (from [MongoDB Atlas](https://cloud.mongodb.com/))
 
@@ -181,6 +182,17 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 | Meta error 100, subcode 4016019 "Flow name is not unique" (Deploy Flow) | A flow with that name already exists on the WABA | The script now generates a **unique name per run** (`farmer_registration_poc_` + 6-character random alphanumeric), so this should not recur. If it does, ensure you are on the correct WABA. |
 | **User sends "Hi" but only gets "Welcome to Kweka Jeeto! If you did not receive the registration form..."** (no flow button) | Flow message failed to send: missing **FLOW_ID** or **WHATSAPP_PHONE_NUMBER_ID**, or Meta API error (token, flow not published, etc.). | (1) **Admin Config:** Ensure **Config** page has **Flow ID** and **WhatsApp Phone Number ID** set (or set **FLOW_ID** and **WHATSAPP_PHONE_NUMBER_ID** in GitHub Secrets and redeploy). (2) **Cloud Run logs:** Check **GCP → Cloud Run → your service → Logs** for "FLOW_ID not configured", "WHATSAPP_PHONE_NUMBER_ID not configured", or "Failed to send flow message" with the Meta error body. (3) **On WhatsApp Web:** Flow (registration form) messages often **cannot be displayed** in WhatsApp Web — they show "This message can't be displayed here. Open WhatsApp on your phone." Open the same chat **on the WhatsApp phone app** to see the flow CTA and open the form. |
 | **Welcome screen or images do not show in the flow** | The flow running on WhatsApp is an older version without the welcome screen or Meta could not load images. | (1) **Re-deploy the flow:** Any change to `flows/farmer-registration.json` (e.g. adding the welcome screen or image URLs) requires re-running **Actions → Deploy Flow (One-Time)**. Copy the new **FLOW_ID** from the workflow output and update the **FLOW_ID** GitHub Secret (and Admin Config if you use it). (2) **Images:** Ensure image URLs in the flow JSON are **HTTPS** and publicly accessible. If images still don’t appear, try re-running Deploy Flow again so Meta picks up the latest flow. |
+| **Daily crop advisory not sent** | Cron not configured or CRON_SECRET mismatch. | (1) Add **CRON_SECRET** to GitHub Secrets (e.g. `openssl rand -base64 24`). (2) In **GCP Cloud Scheduler**, create a job that runs once per day (e.g. 9:00 AM IST): HTTP target **POST** `https://YOUR_CLOUD_RUN_URL/internal/daily-advisory` with header **X-Cron-Secret: YOUR_CRON_SECRET**. (3) Farmers only receive advisory on and after the **Start daily crop advisory from** date they chose in the flow. |
+
+---
+
+## 9.1 Daily crop advisory
+
+Farmers choose a **Start daily crop advisory from** date when they submit the registration flow (Crop Selection screen). Starting from that date, they receive one WhatsApp text message per day with crop advisory content.
+
+- **Endpoint:** `POST /internal/daily-advisory` (protected by **CRON_SECRET**).
+- **Schedule:** Call this endpoint once per day (e.g. via GCP Cloud Scheduler). Use header `X-Cron-Secret: <CRON_SECRET>` or `Authorization: Bearer <CRON_SECRET>`.
+- **Message content:** Configure via Admin or API key `crop_advisory_message`. Use `{{crop}}` for the crop name (e.g. "Your daily advisory for {{crop}}: tips and updates."). If not set, a default message is used.
 
 ---
 
@@ -194,6 +206,7 @@ After deployment, change these from **Admin Portal → Config** (no redeploy):
 | GCP project ID, service account key | GitHub Secrets |
 | Firebase project ID, CI token | GitHub Secrets |
 | Flow ID | From Deploy Flow workflow → GitHub Secrets |
+| CRON_SECRET (optional) | For daily advisory cron → GitHub Secrets; same value in Cloud Scheduler |
 | API base URL | Auto-derived from Cloud Run (no secret needed) |
 
 ---

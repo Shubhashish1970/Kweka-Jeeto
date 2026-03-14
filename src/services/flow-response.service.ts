@@ -27,6 +27,7 @@ export const handleFlowCompletion = async (
       state: farmerData.state,
       district: farmerData.district,
       crop: farmerData.crop,
+      advisory_start_date: farmerData.advisory_start_date,
       flow_token: farmerData.flow_token,
     });
   } catch (err) {

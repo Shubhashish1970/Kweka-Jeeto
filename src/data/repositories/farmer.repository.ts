@@ -21,6 +21,7 @@ export interface CreateFarmerData {
   state: string;
   district: string;
   crop: string;
+  advisory_start_date?: Date;
   flow_token?: string;
 }
 
@@ -81,4 +82,29 @@ export const getFarmersForExport = async (filter: FarmerFilter = {}): Promise<IF
     if (filter.endDate) (query.createdAt as Record<string, Date>).$lte = filter.endDate;
   }
   return Farmer.find(query).sort({ createdAt: -1 }).lean() as unknown as Promise<IFarmer[]>;
+};
+
+/** Start of today in UTC (00:00:00.000) for date comparison */
+function startOfTodayUtc(): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
+/** Farmers who have advisory_start_date on or before today and have not been sent advisory today */
+export const getFarmersDueForDailyAdvisory = async (): Promise<IFarmer[]> => {
+  const today = startOfTodayUtc();
+  const query = {
+    advisory_start_date: { $exists: true, $ne: null, $lte: today },
+    $or: [
+      { last_advisory_sent_at: { $exists: false } },
+      { last_advisory_sent_at: null },
+      { last_advisory_sent_at: { $lt: today } },
+    ],
+  };
+  return Farmer.find(query).lean() as unknown as Promise<IFarmer[]>;
+};
+
+export const updateLastAdvisorySentAt = async (farmerId: string): Promise<void> => {
+  await Farmer.updateOne({ _id: farmerId }, { $set: { last_advisory_sent_at: new Date() } });
 };

@@ -30,6 +30,8 @@ export const env = {
     password: getEnv('ADMIN_PASSWORD', ''),
     jwtSecret: getEnv('ADMIN_JWT_SECRET', ''),
   },
+  /** Secret for cron endpoints (e.g. daily advisory). Set in GitHub Secrets as CRON_SECRET. */
+  cronSecret: getEnv('CRON_SECRET', ''),
   port: parseInt(getEnv('PORT', '8080'), 10),
   nodeEnv: getEnv('NODE_ENV', 'production'),
   apiBaseUrl: getEnv('API_BASE_URL', ''),

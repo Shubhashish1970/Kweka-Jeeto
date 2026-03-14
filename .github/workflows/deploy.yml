@@ -47,13 +47,14 @@ jobs:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           gcloud run deploy kweka-jeeto \
             --image ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/kweka-jeeto:${{ github.sha }} \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "NODE_ENV=production,ADMIN_AUTH_DISABLED=true,WHATSAPP_ACCESS_TOKEN=$WHATSAPP_ACCESS_TOKEN,WHATSAPP_PHONE_NUMBER_ID=$WHATSAPP_PHONE_NUMBER_ID,WHATSAPP_VERIFY_TOKEN=$WHATSAPP_VERIFY_TOKEN,WABA_ID=$WABA_ID,FLOW_ID=$FLOW_ID,MONGODB_URI=$MONGODB_URI,ADMIN_PASSWORD=$ADMIN_PASSWORD,ADMIN_JWT_SECRET=$ADMIN_JWT_SECRET"
+            --set-env-vars "NODE_ENV=production,ADMIN_AUTH_DISABLED=true,WHATSAPP_ACCESS_TOKEN=$WHATSAPP_ACCESS_TOKEN,WHATSAPP_PHONE_NUMBER_ID=$WHATSAPP_PHONE_NUMBER_ID,WHATSAPP_VERIFY_TOKEN=$WHATSAPP_VERIFY_TOKEN,WABA_ID=$WABA_ID,FLOW_ID=$FLOW_ID,MONGODB_URI=$MONGODB_URI,ADMIN_PASSWORD=$ADMIN_PASSWORD,ADMIN_JWT_SECRET=$ADMIN_JWT_SECRET,CRON_SECRET=$CRON_SECRET"
 
       - name: Get Cloud Run URL
         id: url

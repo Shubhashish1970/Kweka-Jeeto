@@ -11,6 +11,7 @@ export interface CreateFarmerInput {
   state: string;
   district: string;
   crop: string;
+  advisory_start_date?: Date;
   flow_token?: string;
 }
 

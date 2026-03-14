@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { connectDb, disconnectDb } from './data/db';
 import { webhookRouter } from './api/webhook';
 import { adminRouter } from './api/admin';
+import { cronRouter } from './api/cron';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 
@@ -17,6 +18,7 @@ app.use(cookieParser());
 
 app.use('/webhook', webhookRouter);
 app.use('/api/admin', adminRouter);
+app.use('/internal', cronRouter);
 
 // Admin static files (optional - when admin is bundled with backend; otherwise use Firebase)
 const adminPath = path.join(__dirname, '../admin/dist');

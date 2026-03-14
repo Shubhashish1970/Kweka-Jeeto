@@ -14,15 +14,47 @@
           },
           {
             "type": "TextHeading",
-            "text": "Welcome to Kweka Jeeto!"
+            "text": "Welcome to Kweka Jeeto !"
           },
           {
             "type": "TextBody",
-            "text": "Now get all the help on your farms and crops on WhatsApp by the press of a button."
+            "text": "Now get all the help on your farms and crops on WhatsApp by the press of a button !!"
+          },
+          {
+            "type": "Image",
+            "src": "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&q=80"
+          },
+          {
+            "type": "TextHeading",
+            "text": "Crop advisory"
+          },
+          {
+            "type": "TextBody",
+            "text": "Get personalised crop tips."
+          },
+          {
+            "type": "Image",
+            "src": "https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=400&q=80"
+          },
+          {
+            "type": "TextHeading",
+            "text": "Weather & tips"
+          },
+          {
+            "type": "TextBody",
+            "text": "Local weather and alerts."
+          },
+          {
+            "type": "TextHeading",
+            "text": "Watch intro"
+          },
+          {
+            "type": "TextBody",
+            "text": "See how it works (video)."
           },
           {
             "type": "Footer",
-            "label": "Continue",
+            "label": "Register",
             "on-click-action": {
               "name": "navigate",
               "next": { "type": "screen", "name": "FARMER_DETAILS" },
@@ -145,7 +177,7 @@
           },
           {
             "type": "TextBody",
-            "text": "Select the crop you are growing."
+            "text": "Select the crop you are growing. Choose from when you want to receive daily crop advisory."
           },
           {
             "type": "Image",
@@ -169,6 +201,14 @@
                 ]
               },
               {
+                "type": "DatePicker",
+                "name": "advisory_start_date",
+                "label": "Start daily crop advisory from",
+                "required": true,
+                "min-date": 1577836800000,
+                "max-date": 1924876799000
+              },
+              {
                 "type": "Footer",
                 "label": "Submit",
                 "on-click-action": {
@@ -179,7 +219,8 @@
                     "profession": "${data.profession}",
                     "state": "${data.state}",
                     "district": "${data.district}",
-                    "crop": "${form.crop}"
+                    "crop": "${form.crop}",
+                    "advisory_start_date": "${form.advisory_start_date}"
                   }
                 }
               }
