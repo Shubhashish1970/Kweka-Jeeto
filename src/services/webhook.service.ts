@@ -1,6 +1,8 @@
 import { handleFlowCompletion } from './flow-response.service';
-import { sendFlowMessage } from './message.service';
+import { sendFlowMessage, sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
+
+const FALLBACK_REPLY = 'Welcome to Kweka Jeeto! If you did not receive the registration form, please try again in a moment.';
 
 interface WebhookMessage {
   from: string;
@@ -40,6 +42,9 @@ export const processWebhookPayload = async (body: {
 
       const value = change.value;
       const messages = value.messages || [];
+      if (messages.length > 0) {
+        logger.info('Webhook: received', messages.length, 'message(s), phone_number_id:', value.metadata?.phone_number_id);
+      }
 
       for (const message of messages) {
         const from = message.from;
@@ -47,7 +52,16 @@ export const processWebhookPayload = async (body: {
 
         if (type === 'text') {
           logger.info('Text message from', from, ':', message.text?.body);
-          await sendFlowMessage(from);
+          try {
+            const sent = await sendFlowMessage(from);
+            if (!sent) {
+              logger.warn('Flow message not sent, sending fallback text to', from);
+              await sendTextMessage(from, FALLBACK_REPLY);
+            }
+          } catch (err) {
+            logger.error('Error sending flow message to', from, err);
+            await sendTextMessage(from, FALLBACK_REPLY).catch((e) => logger.error('Fallback text also failed', e));
+          }
         } else if (type === 'interactive' && message.interactive?.type === 'nfm_reply') {
           const responseJson = message.interactive.nfm_reply?.response_json;
           if (responseJson) {
