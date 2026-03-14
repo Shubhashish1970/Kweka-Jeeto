@@ -135,17 +135,40 @@ export default function Config() {
 
         <div style={{ flex: '0 0 auto', position: 'sticky', top: 24 }}>
           <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>Preview on WhatsApp</p>
+          {/* iPhone-style wireframe: bezel, Dynamic Island, screen */}
           <div
             style={{
               width: 280,
-              background: '#1f2937',
-              borderRadius: 24,
-              padding: 12,
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              background: '#000',
+              borderRadius: 36,
+              padding: 10,
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)',
+              position: 'relative',
             }}
           >
-            <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', minHeight: 420 }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534' }}>
+            {/* Left side buttons (volume) */}
+            <div style={{ position: 'absolute', left: -3, top: 100, width: 3, height: 24, background: '#333', borderRadius: 2 }} />
+            <div style={{ position: 'absolute', left: -3, top: 132, width: 3, height: 36, background: '#333', borderRadius: 2 }} />
+            <div style={{ position: 'absolute', left: -3, top: 176, width: 3, height: 36, background: '#333', borderRadius: 2 }} />
+            {/* Right side button (power) */}
+            <div style={{ position: 'absolute', right: -3, top: 100, width: 3, height: 56, background: '#333', borderRadius: 2 }} />
+            {/* Screen */}
+            <div style={{ background: '#fff', borderRadius: 28, overflow: 'hidden', minHeight: 420, position: 'relative' }}>
+              {/* Dynamic Island */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 12,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 100,
+                  height: 28,
+                  borderRadius: 14,
+                  background: '#000',
+                  zIndex: 2,
+                }}
+              />
+              <div style={{ padding: '44px 16px 12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534' }}>
                 Kweka Jeeto
               </div>
               <div style={{ padding: 16, background: '#e5e5e5' }}>
