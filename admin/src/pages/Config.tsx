@@ -14,30 +14,42 @@ const DEFAULT_CONFIG: Record<string, string> = {
   flow_id: '',
 };
 
-const CONFIG_KEYS = [
+/** Meta/WhatsApp limits for Config fields — used for maxLength and character counters. */
+const CONFIG_LIMITS: Record<string, number> = {
+  flow_cta: 20,
+  flow_header: 60,
+  flow_body: 1024,
+  flow_completion_message: 500,
+};
+
+const CONFIG_KEYS: Array<{ key: string; label: string; type: string; hint: string; maxLength?: number }> = [
   {
     key: 'flow_cta',
     label: 'Flow CTA Button Text',
     type: 'text',
     hint: 'Text on the button that opens the registration flow in WhatsApp (e.g. “Register” or “किसान पंजीकरण”).',
+    maxLength: CONFIG_LIMITS.flow_cta,
   },
   {
     key: 'flow_header',
     label: 'Flow Header',
     type: 'text',
     hint: 'Title shown at the top of the flow when the user opens it in WhatsApp.',
+    maxLength: CONFIG_LIMITS.flow_header,
   },
   {
     key: 'flow_body',
     label: 'Flow Body Text',
     type: 'text',
     hint: 'Short description shown in the flow invite message (e.g. “Register to get crop advisory.”).',
+    maxLength: CONFIG_LIMITS.flow_body,
   },
   {
     key: 'flow_completion_message',
     label: 'Flow Completion Message',
     type: 'text',
     hint: 'Message sent to the user after they successfully submit the flow (e.g. “Thank you, we’ll be in touch.”).',
+    maxLength: CONFIG_LIMITS.flow_completion_message,
   },
   {
     key: 'whatsapp_phone_number_id',
@@ -109,17 +121,36 @@ export default function Config() {
       </p>
       <div className="flex flex-wrap gap-8 items-start">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-[480px] min-w-[280px] flex-1">
-          {CONFIG_KEYS.map(({ key, label, hint }) => (
-            <div key={key} className="mb-4">
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">{label}</label>
-              {hint && <p className="text-sm text-slate-600 mb-1.5">{hint}</p>}
-              <input
-                value={config[key] ?? ''}
-                onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
-                className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              />
-            </div>
-          ))}
+          {CONFIG_KEYS.map(({ key, label, hint, maxLength }) => {
+            const value = config[key] ?? '';
+            const len = value.length;
+            const atLimit = maxLength != null && len >= maxLength;
+            return (
+              <div key={key} className="mb-4">
+                <div className="flex items-baseline justify-between gap-2 mb-1">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">{label}</label>
+                  {maxLength != null && (
+                    <span className={`text-xs tabular-nums shrink-0 ${atLimit ? 'text-amber-600 font-medium' : 'text-slate-400'}`}>
+                      {len}/{maxLength}
+                    </span>
+                  )}
+                </div>
+                {hint && <p className="text-sm text-slate-600 mb-1.5">{hint}</p>}
+                <input
+                  value={value}
+                  onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
+                  maxLength={maxLength}
+                  className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  aria-describedby={maxLength != null ? `${key}-limit` : undefined}
+                />
+                {maxLength != null && (
+                  <p id={`${key}-limit`} className="mt-1 text-xs text-slate-500">
+                    Max {maxLength} characters{key === 'flow_header' ? ' (Meta limit for flow header)' : ''}.
+                  </p>
+                )}
+              </div>
+            );
+          })}
           {message && (
             <p className={`mb-4 text-sm ${message.includes('Failed') ? 'text-red-500' : 'text-green-600'}`}>{message}</p>
           )}

@@ -5,6 +5,9 @@ import { logger } from '../utils/logger';
 
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
 
+/** WhatsApp Flow message header text max length (Meta API limit). */
+const FLOW_HEADER_MAX_LENGTH = 60;
+
 const getPhoneNumberId = async (): Promise<string> => {
   const fromConfig = await getConfigValue<string>('whatsapp_phone_number_id');
   return fromConfig || env.whatsapp.phoneNumberId;
@@ -47,6 +50,13 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
       return false;
     }
 
+    const headerText = flowHeader.length > FLOW_HEADER_MAX_LENGTH
+      ? flowHeader.slice(0, FLOW_HEADER_MAX_LENGTH)
+      : flowHeader;
+    if (flowHeader.length > FLOW_HEADER_MAX_LENGTH) {
+      logger.warn('Flow header truncated to', FLOW_HEADER_MAX_LENGTH, 'chars (Meta limit). Original length:', flowHeader.length);
+    }
+
     const url = `${GRAPH_API_BASE}/${phoneNumberId}/messages`;
     const payload = {
       messaging_product: 'whatsapp',
@@ -55,7 +65,7 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
       type: 'interactive',
       interactive: {
         type: 'flow',
-        header: { type: 'text', text: flowHeader },
+        header: { type: 'text', text: headerText },
         body: { text: flowBody },
         action: {
           name: 'flow',
