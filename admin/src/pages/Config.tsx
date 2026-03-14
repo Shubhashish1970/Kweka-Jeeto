@@ -148,7 +148,7 @@ export default function Config() {
           {/* iPhone-style wireframe — same size for Chat invite and Flow screens */}
           <div
             style={{
-              width: 299,
+              width: 319,
               background: '#000',
               borderRadius: 38,
               padding: 4,
