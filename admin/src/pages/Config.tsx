@@ -171,23 +171,24 @@ export default function Config() {
               <div style={{ padding: '40px 16px 12px 16px', borderBottom: '1px solid #e5e7eb', background: '#f0fdf4', fontSize: 13, color: '#166534' }}>
                 Kweka Jeeto
               </div>
-              <div style={{ padding: 16, background: '#e5e5e5' }}>
+              <div style={{ padding: '12px 10px 12px 10px', background: '#e5e5e5' }}>
                 <div
                   style={{
                     marginLeft: 0,
-                    marginRight: '20%',
+                    marginRight: '4%',
+                    width: '96%',
                     background: '#fff',
                     borderRadius: '12px 12px 12px 4px',
-                    padding: '10px 14px',
+                    padding: '8px 12px 10px 12px',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
                   }}
                 >
-                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6, color: '#111' }}>{previewHeader}</div>
-                  <div style={{ fontSize: 14, color: '#374151', marginBottom: 12 }}>{previewBody}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6, color: '#111', lineHeight: 1.35 }}>{previewHeader}</div>
+                  <div style={{ fontSize: 14, color: '#374151', marginBottom: 10, lineHeight: 1.4 }}>{previewBody}</div>
                   <div
                     style={{
                       display: 'inline-block',
-                      padding: '10px 20px',
+                      padding: '8px 16px',
                       background: '#25D366',
                       color: '#fff',
                       borderRadius: 8,
@@ -198,18 +199,20 @@ export default function Config() {
                     {previewCta}
                   </div>
                 </div>
-                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>Tap button to open flow</div>
+                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>Tap button to open flow</div>
                 <div
                   style={{
-                    marginTop: 12,
+                    marginTop: 10,
                     marginLeft: 0,
-                    marginRight: '20%',
+                    marginRight: '4%',
+                    width: '96%',
                     background: '#fff',
                     borderRadius: '12px 12px 12px 4px',
-                    padding: '10px 14px',
+                    padding: '8px 12px 10px 12px',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
                     fontSize: 13,
                     color: '#374151',
+                    lineHeight: 1.4,
                   }}
                 >
                   <span style={{ color: '#6b7280' }}>After submit: </span>
