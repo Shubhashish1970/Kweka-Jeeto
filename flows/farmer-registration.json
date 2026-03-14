@@ -2,6 +2,43 @@
   "version": "7.3",
   "screens": [
     {
+      "id": "WELCOME",
+      "title": "Welcome",
+      "data": {},
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Image",
+            "url": "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&q=80"
+          },
+          {
+            "type": "TextHeading",
+            "text": "Welcome to Kweka Jeeto!"
+          },
+          {
+            "type": "TextBody",
+            "text": "Now get all the help on your farms and crops on WhatsApp by the press of a button."
+          },
+          {
+            "type": "Form",
+            "name": "welcome_form",
+            "children": [
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": { "type": "screen", "name": "FARMER_DETAILS" },
+                  "payload": {}
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "id": "FARMER_DETAILS",
       "title": "Farmer Details",
       "data": {},
