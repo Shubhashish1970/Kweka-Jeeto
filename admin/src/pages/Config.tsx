@@ -2,12 +2,42 @@ import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 
 const CONFIG_KEYS = [
-  { key: 'flow_cta', label: 'Flow CTA Button Text', type: 'text' },
-  { key: 'flow_header', label: 'Flow Header', type: 'text' },
-  { key: 'flow_body', label: 'Flow Body Text', type: 'text' },
-  { key: 'flow_completion_message', label: 'Flow Completion Message', type: 'text' },
-  { key: 'whatsapp_phone_number_id', label: 'WhatsApp Phone Number ID', type: 'text' },
-  { key: 'flow_id', label: 'Flow ID', type: 'text' },
+  {
+    key: 'flow_cta',
+    label: 'Flow CTA Button Text',
+    type: 'text',
+    hint: 'Text on the button that opens the registration flow in WhatsApp (e.g. “Register” or “किसान पंजीकरण”).',
+  },
+  {
+    key: 'flow_header',
+    label: 'Flow Header',
+    type: 'text',
+    hint: 'Title shown at the top of the flow when the user opens it in WhatsApp.',
+  },
+  {
+    key: 'flow_body',
+    label: 'Flow Body Text',
+    type: 'text',
+    hint: 'Short description shown in the flow invite message (e.g. “Register to get crop advisory.”).',
+  },
+  {
+    key: 'flow_completion_message',
+    label: 'Flow Completion Message',
+    type: 'text',
+    hint: 'Message sent to the user after they successfully submit the flow (e.g. “Thank you, we’ll be in touch.”).',
+  },
+  {
+    key: 'whatsapp_phone_number_id',
+    label: 'WhatsApp Phone Number ID',
+    type: 'text',
+    hint: 'Meta’s ID for your WhatsApp Business phone number; leave blank to use the value from GitHub/env.',
+  },
+  {
+    key: 'flow_id',
+    label: 'Flow ID',
+    type: 'text',
+    hint: 'WhatsApp Flow ID from the “Deploy Flow” run; leave blank to use the value from GitHub/env.',
+  },
 ];
 
 export default function Config() {
@@ -52,9 +82,12 @@ export default function Config() {
         Configure WhatsApp and Flow settings. These override environment variables when set.
       </p>
       <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: 600 }}>
-        {CONFIG_KEYS.map(({ key, label }) => (
+        {CONFIG_KEYS.map(({ key, label, hint }) => (
           <div key={key} style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{label}</label>
+            {hint && (
+              <p style={{ marginBottom: 6, fontSize: 13, color: '#6b7280' }}>{hint}</p>
+            )}
             <input
               value={config[key] ?? ''}
               onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
