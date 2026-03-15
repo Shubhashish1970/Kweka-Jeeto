@@ -1,5 +1,10 @@
 {
   "version": "7.3",
+  "routing_model": {
+    "WELCOME": [{ "target": "FARMER_DETAILS" }],
+    "FARMER_DETAILS": [{ "target": "CROP_SELECTION" }],
+    "CROP_SELECTION": []
+  },
   "screens": [
     {
       "id": "WELCOME",
