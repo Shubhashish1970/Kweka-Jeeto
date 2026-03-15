@@ -33,6 +33,12 @@ const getFlowBody = async (): Promise<string> => {
   return fromConfig || 'Register to get crop advisory.';
 };
 
+/** Optional image URL for flow invite message header (chat bubble). If set, the invite shows this image. */
+const getFlowHeaderImage = async (): Promise<string> => {
+  const fromConfig = await getConfigValue<string>('flow_header_image');
+  return fromConfig?.trim() ?? '';
+};
+
 export const sendFlowMessage = async (to: string): Promise<boolean> => {
   try {
     const phoneNumberId = (await getPhoneNumberId())?.trim();
@@ -40,6 +46,7 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
     const flowCta = await getFlowCta();
     const flowHeader = await getFlowHeader();
     const flowBody = await getFlowBody();
+    const flowHeaderImage = await getFlowHeaderImage();
 
     if (!phoneNumberId) {
       logger.error('WHATSAPP_PHONE_NUMBER_ID not configured. Set it in env or Admin Config.');
@@ -57,6 +64,11 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
       logger.warn('Flow header truncated to', FLOW_HEADER_MAX_LENGTH, 'chars (Meta limit). Original length:', flowHeader.length);
     }
 
+    const header =
+      flowHeaderImage && flowHeaderImage.startsWith('http')
+        ? { type: 'image' as const, image: { link: flowHeaderImage } }
+        : { type: 'text' as const, text: headerText };
+
     const url = `${GRAPH_API_BASE}/${phoneNumberId}/messages`;
     const payload = {
       messaging_product: 'whatsapp',
@@ -65,7 +77,7 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
       type: 'interactive',
       interactive: {
         type: 'flow',
-        header: { type: 'text', text: headerText },
+        header,
         body: { text: flowBody },
         action: {
           name: 'flow',
@@ -78,12 +90,30 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
       },
     };
 
-    await axios.post(url, payload, {
-      headers: {
-        Authorization: `Bearer ${env.whatsapp.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${env.whatsapp.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (firstErr: unknown) {
+      if (header.type === 'image') {
+        logger.warn('Flow message with image header failed, retrying with text header', firstErr);
+        const fallbackPayload = {
+          ...payload,
+          interactive: { ...payload.interactive, header: { type: 'text' as const, text: headerText } },
+        };
+        await axios.post(url, fallbackPayload, {
+          headers: {
+            Authorization: `Bearer ${env.whatsapp.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } else {
+        throw firstErr;
+      }
+    }
 
     logger.info('Flow message sent to', to);
     return true;
