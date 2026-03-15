@@ -85,6 +85,11 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
             flow_message_version: '3',
             flow_id: flowId,
             flow_cta: flowCta,
+            flow_action: 'navigate',
+            flow_action_payload: {
+              screen: 'WELCOME',
+              data: {},
+            },
           },
         },
       },
@@ -115,7 +120,7 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
       }
     }
 
-    logger.info('Flow message sent to', to);
+    logger.info('Flow message sent to', to, 'flow_id=', flowId, 'screen=WELCOME');
     return true;
   } catch (err: unknown) {
     const ax = err && typeof err === 'object' && 'response' in err ? (err as { response?: { status?: number; data?: unknown } }) : null;

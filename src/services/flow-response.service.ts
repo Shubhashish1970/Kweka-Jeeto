@@ -15,6 +15,7 @@ export const handleFlowCompletion = async (
     await sendTextMessage(waId, 'Sorry, we could not process your submission. Please try again.');
     return;
   }
+  logger.info('Flow submission payload', { waId, payload });
 
   const farmerData = extractFarmerData(payload);
 
@@ -35,9 +36,11 @@ export const handleFlowCompletion = async (
     await sendTextMessage(waId, 'Sorry, we encountered an error. Please try again later.');
     return;
   }
+  logger.info('Farmer saved from flow', { waId, farmer_name: farmerData.farmer_name, crop: farmerData.crop });
 
   const confirmationMessage = await getConfigValue<string>('flow_completion_message');
   const message = confirmationMessage || DEFAULT_CONFIRMATION;
 
   await sendTextMessage(waId, message);
+  logger.info('Flow completion: confirmation sent to', waId);
 };

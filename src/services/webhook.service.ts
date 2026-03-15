@@ -51,23 +51,35 @@ export const processWebhookPayload = async (body: {
         const type = message.type;
 
         if (type === 'text') {
-          logger.info('Text message from', from, ':', message.text?.body);
-          try {
-            const sent = await sendFlowMessage(from);
-            if (!sent) {
-              logger.warn('Flow message not sent, sending fallback text to', from);
-              await sendTextMessage(from, FALLBACK_REPLY);
+          const messageBody = (message.text?.body ?? '').trim().toLowerCase();
+          logger.info('Webhook: text message from', from, 'body=', JSON.stringify(messageBody));
+          const triggerWords = ['hi', 'hello', 'start', 'register'];
+          const shouldSendFlow = triggerWords.some((w) => messageBody === w || messageBody.startsWith(w + ' ') || messageBody.endsWith(' ' + w));
+          if (shouldSendFlow) {
+            logger.info('Webhook: triggering flow send for from=', from);
+            try {
+              const sent = await sendFlowMessage(from);
+              if (!sent) {
+                logger.warn('Flow message not sent, sending fallback text to', from);
+                await sendTextMessage(from, FALLBACK_REPLY);
+              }
+            } catch (err) {
+              logger.error('Error sending flow message to', from, err);
+              await sendTextMessage(from, FALLBACK_REPLY).catch((e) => logger.error('Fallback text also failed', e));
             }
-          } catch (err) {
-            logger.error('Error sending flow message to', from, err);
-            await sendTextMessage(from, FALLBACK_REPLY).catch((e) => logger.error('Fallback text also failed', e));
+          } else {
+            logger.info('Webhook: text not a flow trigger, ignoring', from);
           }
         } else if (type === 'interactive' && message.interactive?.type === 'nfm_reply') {
           const responseJson = message.interactive.nfm_reply?.response_json;
           if (responseJson) {
-            logger.info('Flow completion from', from);
+            logger.info('Webhook: flow completion from', from, 'response_json=', responseJson);
             await handleFlowCompletion(from, responseJson);
+          } else {
+            logger.warn('Webhook: interactive nfm_reply missing response_json', { from, type: message.interactive?.type });
           }
+        } else {
+          logger.info('Webhook: unhandled message type', { from, type });
         }
       }
     }
