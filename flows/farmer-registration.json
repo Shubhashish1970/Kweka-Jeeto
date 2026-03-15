@@ -205,8 +205,8 @@
                 "name": "advisory_start_date",
                 "label": "Start daily crop advisory from",
                 "required": true,
-                "min-date": 1577836800000,
-                "max-date": 1924876799000
+                "min-date": "1577836800000",
+                "max-date": "1924876799000"
               },
               {
                 "type": "Footer",
