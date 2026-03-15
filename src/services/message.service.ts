@@ -88,7 +88,6 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
             flow_action: 'navigate',
             flow_action_payload: {
               screen: 'WELCOME',
-              data: {},
             },
           },
         },
