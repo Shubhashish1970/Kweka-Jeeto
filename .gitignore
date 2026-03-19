@@ -1,7 +1,7 @@
 node_modules/
 dist/
-# RSA key pair — NEVER commit private keys
-keys/
+# RSA key pair — NEVER commit private key, public key is safe to commit
+keys/private_key.pem
 admin/dist/
 admin/node_modules/
 .env
