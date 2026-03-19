@@ -53,8 +53,8 @@
             "text": "${data.welcome_body}"
           },
           {
-            "type": "RichText",
-            "text": "**What you get:**\n\n- Daily crop care tips\n- Local weather alerts\n- Pest & disease warnings\n- Market price updates\n- Sowing & harvest calendar"
+            "type": "TextBody",
+            "text": "What you get: Daily crop care tips, local weather alerts, pest & disease warnings, market price updates, and sowing & harvest calendar."
           },
           {
             "type": "Footer",
@@ -381,6 +381,14 @@
           {
             "type": "TextCaption",
             "text": "Kweka Jeeto — Your Farming Companion"
+          },
+          {
+            "type": "Footer",
+            "label": "Done",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {}
+            }
           }
         ]
       }
