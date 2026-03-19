@@ -262,6 +262,12 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
             welcome_title: `Welcome back, ${existing.farmer_name}! 🌾`,
             welcome_body: `You're registered for ${cropLabel(existing.crop)} advisory. You can update your crop details below.`,
             button_label: 'Update Details',
+            // Prefill fields — passed via navigate payload to FARMER_DETAILS
+            pf_farmer_name: existing.farmer_name || '',
+            pf_age: existing.age || '',
+            pf_profession: existing.profession || '',
+            pf_state: existing.state || '',
+            pf_district: existing.district || '',
           },
         };
       }
@@ -277,6 +283,12 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       welcome_title: 'Welcome to Kweka Jeeto! 🌾',
       welcome_body: 'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
       button_label: 'Register Now',
+      // Empty prefill fields for new farmers (schema requires all declared fields)
+      pf_farmer_name: '',
+      pf_age: '',
+      pf_profession: '',
+      pf_state: '',
+      pf_district: '',
     },
   };
 }

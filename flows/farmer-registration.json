@@ -32,6 +32,26 @@
         "button_label": {
           "type": "string",
           "__example__": "Register Now"
+        },
+        "pf_farmer_name": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_age": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_profession": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_state": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_district": {
+          "type": "string",
+          "__example__": ""
         }
       },
       "layout": {
@@ -42,7 +62,7 @@
             "src": "${data.header_image_src}",
             "height": 300,
             "scale-type": "cover",
-            "alt-text": "Kweka Jeeto — Agri Advisory"
+            "alt-text": "Kweka Jeeto \u2014 Agri Advisory"
           },
           {
             "type": "TextHeading",
@@ -65,7 +85,13 @@
                 "type": "screen",
                 "name": "FARMER_DETAILS"
               },
-              "payload": {}
+              "payload": {
+                "pf_farmer_name": "${data.pf_farmer_name}",
+                "pf_age": "${data.pf_age}",
+                "pf_profession": "${data.pf_profession}",
+                "pf_state": "${data.pf_state}",
+                "pf_district": "${data.pf_district}"
+              }
             }
           }
         ]
@@ -74,7 +100,28 @@
     {
       "id": "FARMER_DETAILS",
       "title": "Your Details",
-      "data": {},
+      "data": {
+        "pf_farmer_name": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_age": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_profession": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_state": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_district": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
       "layout": {
         "type": "SingleColumnLayout",
         "children": [
@@ -103,7 +150,8 @@
                 "label": "Full Name",
                 "required": true,
                 "input-type": "text",
-                "helper-text": "As you would like to be addressed"
+                "helper-text": "As you would like to be addressed",
+                "init-value": "${data.pf_farmer_name}"
               },
               {
                 "type": "TextInput",
@@ -111,7 +159,8 @@
                 "label": "Age",
                 "required": true,
                 "input-type": "number",
-                "helper-text": "Your age in years"
+                "helper-text": "Your age in years",
+                "init-value": "${data.pf_age}"
               },
               {
                 "type": "TextInput",
@@ -119,7 +168,8 @@
                 "label": "Occupation",
                 "required": true,
                 "input-type": "text",
-                "helper-text": "e.g. Farmer, Agronomist, Trader"
+                "helper-text": "e.g. Farmer, Agronomist, Trader",
+                "init-value": "${data.pf_profession}"
               },
               {
                 "type": "Dropdown",
@@ -187,7 +237,8 @@
                     "id": "other",
                     "title": "Other"
                   }
-                ]
+                ],
+                "init-value": "${data.pf_state}"
               },
               {
                 "type": "TextInput",
@@ -195,7 +246,8 @@
                 "label": "District / Village",
                 "required": true,
                 "input-type": "text",
-                "helper-text": "Helps us localize your advisory"
+                "helper-text": "Helps us localize your advisory",
+                "init-value": "${data.pf_district}"
               },
               {
                 "type": "Footer",
@@ -380,7 +432,7 @@
           },
           {
             "type": "TextCaption",
-            "text": "Kweka Jeeto — Your Farming Companion"
+            "text": "Kweka Jeeto \u2014 Your Farming Companion"
           },
           {
             "type": "Footer",
