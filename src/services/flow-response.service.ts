@@ -19,6 +19,14 @@ export const handleFlowCompletion = async (
 
   const farmerData = extractFarmerData(payload);
 
+  // In endpoint mode the nfm_reply payload only contains flow_token (no farmer fields).
+  // The endpoint's handleCropSelection already saved the data and sent the confirmation.
+  // Upserting with empty fields here would overwrite the real data — so skip it.
+  if (!farmerData.farmer_name && !farmerData.crop) {
+    logger.info('Flow nfm_reply: no farmer data in payload (endpoint mode handled it), skipping upsert+confirmation for', waId);
+    return;
+  }
+
   try {
     await upsertFarmer({
       wa_id: waId,
@@ -36,7 +44,7 @@ export const handleFlowCompletion = async (
     await sendTextMessage(waId, 'Sorry, we encountered an error. Please try again later.');
     return;
   }
-  logger.info('Farmer saved from flow', { waId, farmer_name: farmerData.farmer_name, crop: farmerData.crop });
+  logger.info('Farmer saved from nfm_reply', { waId, farmer_name: farmerData.farmer_name, crop: farmerData.crop });
 
   const confirmationMessage = await getConfigValue<string>('flow_completion_message');
   const message = confirmationMessage || DEFAULT_CONFIRMATION;
