@@ -30,6 +30,23 @@ export const createFarmer = async (data: CreateFarmerData): Promise<IFarmer> => 
   return farmer.save();
 };
 
+/**
+ * Upsert farmer by wa_id — idempotent.
+ * Used by the flow endpoint so that duplicate nfm_reply webhook events don't create duplicates.
+ */
+export const upsertFarmer = async (data: CreateFarmerData): Promise<IFarmer> => {
+  const result = await Farmer.findOneAndUpdate(
+    { wa_id: data.wa_id },
+    { $set: data },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).lean();
+  return result as unknown as IFarmer;
+};
+
+export const getFarmerByWaId = async (waId: string): Promise<IFarmer | null> => {
+  return Farmer.findOne({ wa_id: waId }).sort({ createdAt: -1 }).lean() as unknown as Promise<IFarmer | null>;
+};
+
 export const getFarmers = async (
   filter: FarmerFilter = {},
   options: PaginationOptions = {}

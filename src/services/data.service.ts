@@ -19,6 +19,10 @@ export const createFarmer = async (data: CreateFarmerInput): Promise<IFarmer> =>
   return farmerRepo.createFarmer(data);
 };
 
+export const upsertFarmer = async (data: CreateFarmerInput): Promise<IFarmer> => {
+  return farmerRepo.upsertFarmer(data);
+};
+
 export const getFarmers = farmerRepo.getFarmers;
 export const getFarmersForExport = farmerRepo.getFarmersForExport;
 export const getFarmerCount = farmerRepo.getFarmerCount;

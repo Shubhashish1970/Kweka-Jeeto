@@ -1,4 +1,4 @@
-import { createFarmer, getConfigValue } from './data.service';
+import { upsertFarmer, getConfigValue } from './data.service';
 import { sendTextMessage } from './message.service';
 import { parseFlowResponseJson, extractFarmerData } from '../flows/flow-handler';
 import { logger } from '../utils/logger';
@@ -20,7 +20,7 @@ export const handleFlowCompletion = async (
   const farmerData = extractFarmerData(payload);
 
   try {
-    await createFarmer({
+    await upsertFarmer({
       wa_id: waId,
       farmer_name: farmerData.farmer_name,
       age: farmerData.age,

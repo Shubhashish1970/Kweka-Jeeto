@@ -22,6 +22,12 @@ export const env = {
     verifyToken: getEnv('WHATSAPP_VERIFY_TOKEN', ''),
     wabaId: getEnv('WABA_ID', ''),
     flowId: getEnv('FLOW_ID', ''),
+    /** RSA private key (PEM) for Flow endpoint decryption. Stored with \\n in GitHub Secrets. */
+    flowPrivateKey: getEnv('FLOW_PRIVATE_KEY', '').replace(/\\n/g, '\n'),
+    /** Optional passphrase for the RSA private key. */
+    flowPrivateKeyPassphrase: getEnv('FLOW_PRIVATE_KEY_PASSPHRASE', ''),
+    /** Facebook App Secret for validating X-Hub-Signature-256 on the flow endpoint. */
+    appSecret: getEnv('APP_SECRET', ''),
   },
   mongodb: {
     uri: getEnv('MONGODB_URI', ''),

@@ -39,6 +39,7 @@ jobs:
           WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
           WABA_ID: ${{ secrets.WABA_ID }}
           WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          FLOW_ENDPOINT_URI: ${{ secrets.VITE_API_URL }}/flow/endpoint
         run: npm run deploy:flow
 
       - name: Set FLOW_ID output

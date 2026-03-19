@@ -171,6 +171,14 @@ const run = async () => {
     const flowName = sanitizeFlowName(`farmer_registration_poc_${randomFlowSuffix()}`);
     console.log('Flow name (unique per run):', flowName);
 
+    // Endpoint URI for the flow data exchange endpoint
+    const endpointUri = process.env.FLOW_ENDPOINT_URI || (process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/flow/endpoint` : '');
+    if (endpointUri) {
+      console.log('Flow endpoint URI:', endpointUri);
+    } else {
+      console.warn('FLOW_ENDPOINT_URI not set — deploying flow without endpoint (set FLOW_ENDPOINT_URI=https://<your-cloud-run-url>/flow/endpoint in GitHub Secrets)');
+    }
+
     // Create flow as DRAFT so we can fetch validation_errors before publishing (per Meta Flows API)
     const createRes = await axios.post(
       `${GRAPH_API}/${effectiveWabaId}/flows`,
@@ -179,6 +187,7 @@ const run = async () => {
         categories: ['LEAD_GENERATION'],
         flow_json: flowJson,
         publish: false,
+        ...(endpointUri ? { endpoint_uri: endpointUri } : {}),
       },
       { headers }
     );

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { env } from '../config/env';
 import { getConfigValue } from './data.service';
+import { encodeFlowToken } from './flow-endpoint.service';
 import { logger } from '../utils/logger';
 
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
@@ -69,6 +70,7 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
         ? { type: 'image' as const, image: { link: flowHeaderImage } }
         : { type: 'text' as const, text: headerText };
 
+    const flowToken = encodeFlowToken(to.replace(/\D/g, ''));
     const url = `${GRAPH_API_BASE}/${phoneNumberId}/messages`;
     const payload = {
       messaging_product: 'whatsapp',
@@ -83,9 +85,10 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
           name: 'flow',
           parameters: {
             flow_message_version: '3',
+            flow_token: flowToken,
             flow_id: flowId,
             flow_cta: flowCta,
-            flow_action: 'navigate',
+            flow_action: 'data_exchange',
             flow_action_payload: {
               screen: 'WELCOME',
             },
@@ -119,7 +122,7 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
       }
     }
 
-    logger.info('Flow message sent to', to, 'flow_id=', flowId, 'screen=WELCOME');
+    logger.info('Flow message sent to', to, 'flow_id=', flowId, 'mode=data_exchange');
     return true;
   } catch (err: unknown) {
     const ax = err && typeof err === 'object' && 'response' in err ? (err as { response?: { status?: number; data?: unknown } }) : null;

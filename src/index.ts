@@ -7,12 +7,18 @@ import { connectDb, disconnectDb } from './data/db';
 import { webhookRouter } from './api/webhook';
 import { adminRouter } from './api/admin';
 import { cronRouter } from './api/cron';
+import { flowEndpointRouter } from './api/flow-endpoint';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 
 const app = express();
 
 app.use(cors({ origin: true, credentials: true, methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] }));
+
+// Flow endpoint has its own body parser (captures rawBody for signature verification)
+// Must be mounted BEFORE global express.json()
+app.use('/flow/endpoint', flowEndpointRouter);
+
 app.use(express.json());
 app.use(cookieParser());
 

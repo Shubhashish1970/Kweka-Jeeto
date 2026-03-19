@@ -3,18 +3,12 @@ import { getFarmersDueForDailyAdvisory, updateLastAdvisorySentAt } from '../data
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
 import { IFarmer } from '../data/models/Farmer';
+import { CROP_LABEL_MAP } from './flow-endpoint.service';
 
 const DEFAULT_ADVISORY_MESSAGE = 'Your daily crop advisory: tips and updates for your crop. Stay tuned for more.';
 
 function cropLabel(cropId: string): string {
-  const labels: Record<string, string> = {
-    cotton: 'Cotton',
-    paddy: 'Paddy',
-    chilli: 'Chilli',
-    maize: 'Maize',
-    tomato: 'Tomato',
-  };
-  return labels[cropId] ?? cropId;
+  return CROP_LABEL_MAP[cropId] ?? cropId;
 }
 
 /** Build message for a farmer (supports {{crop}} placeholder) */
