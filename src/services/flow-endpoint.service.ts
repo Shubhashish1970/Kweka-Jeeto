@@ -23,8 +23,11 @@ export const encodeFlowToken = (waId: string): string =>
 export const decodeWaIdFromFlowToken = (flowToken: string): string | null => {
   try {
     const parts = flowToken.split('_');
+    // Format: kj_<base64url>_<timestamp>
+    // base64url may contain underscores, so rejoin everything between first and last segment
     if (parts.length < 3 || parts[0] !== 'kj') return null;
-    return Buffer.from(parts[1], 'base64url').toString('utf-8');
+    const encoded = parts.slice(1, -1).join('_');
+    return Buffer.from(encoded, 'base64url').toString('utf-8');
   } catch {
     return null;
   }
