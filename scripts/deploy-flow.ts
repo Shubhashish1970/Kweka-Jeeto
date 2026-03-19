@@ -229,14 +229,31 @@ const run = async () => {
       process.exit(1);
     }
 
+    fs.writeFileSync(path.join(__dirname, '../.flow_id'), flowId, 'utf-8');
+    fs.writeFileSync(path.join(__dirname, '../.flow_name'), flowName, 'utf-8');
+
+    if (endpointUri) {
+      // Cannot publish yet — Meta pings the endpoint to verify it's live before allowing publish.
+      // Deploy the backend first (which needs FLOW_ID), then publish via the publish-flow script.
+      console.log('');
+      console.log('Flow created as DRAFT (not published yet).');
+      console.log('Meta requires the endpoint to be live before publishing.');
+      console.log('');
+      console.log('Next steps:');
+      console.log(`  1. Add FLOW_ID=${flowId} to GitHub Secrets`);
+      console.log('  2. Trigger the main Deploy workflow to deploy the backend with the endpoint');
+      console.log('  3. Run the "Publish Flow" workflow (or npm run publish:flow) to publish once live');
+      console.log('');
+      console.log(`FLOW_ID=${flowId}`);
+      process.exit(0);
+    }
+
     console.log('Flow created (draft), no validation errors. Publishing...');
     await axios.post(`${GRAPH_API}/${flowId}/publish`, {}, { headers });
 
     console.log('Flow published successfully!');
     console.log('Flow name:', flowName);
     console.log(`FLOW_ID=${flowId}`);
-    fs.writeFileSync(path.join(__dirname, '../.flow_id'), flowId, 'utf-8');
-    fs.writeFileSync(path.join(__dirname, '../.flow_name'), flowName, 'utf-8');
     process.exit(0);
   } catch (err: unknown) {
     const ax = err as { response?: { status?: number; data?: unknown } };

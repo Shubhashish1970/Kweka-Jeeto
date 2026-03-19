@@ -1,0 +1,28 @@
+# Run this workflow AFTER the backend is deployed and the flow endpoint is live.
+# It publishes the draft flow created by the deploy-flow workflow.
+name: Publish Flow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish-flow:
+    name: Publish Draft WhatsApp Flow
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Publish flow
+        env:
+          FLOW_ID: ${{ secrets.FLOW_ID }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+        run: npm run publish:flow

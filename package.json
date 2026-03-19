@@ -13,6 +13,7 @@
     "deploy:flow": "ts-node scripts/deploy-flow.ts",
     "generate:keys": "ts-node scripts/generate-keys.ts",
     "upload:public-key": "ts-node scripts/upload-public-key.ts",
+    "publish:flow": "ts-node scripts/publish-flow.ts",
     "encode:images": "ts-node scripts/encode-images.ts",
     "test:mongodb": "node scripts/test-mongodb-connection.js"
   },
