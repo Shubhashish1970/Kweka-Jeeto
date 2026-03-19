@@ -11,7 +11,6 @@ const DEFAULT_CONFIG: Record<string, string> = {
   flow_body: 'Register to get crop advisory.',
   flow_completion_message: "Thank you! We've received your details.",
   whatsapp_phone_number_id: '',
-  flow_id: '',
 };
 
 /** Meta/WhatsApp limits for Config fields — used for maxLength and character counters. */
@@ -56,12 +55,6 @@ const CONFIG_KEYS: Array<{ key: string; label: string; type: string; hint: strin
     label: 'WhatsApp Phone Number ID',
     type: 'text',
     hint: 'Meta’s ID for your WhatsApp Business phone number; leave blank to use the value from GitHub/env.',
-  },
-  {
-    key: 'flow_id',
-    label: 'Flow ID',
-    type: 'text',
-    hint: 'WhatsApp Flow ID from the “Deploy Flow” run; leave blank to use the value from GitHub/env.',
   },
 ];
 

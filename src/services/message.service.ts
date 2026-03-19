@@ -14,9 +14,8 @@ const getPhoneNumberId = async (): Promise<string> => {
   return fromConfig || env.whatsapp.phoneNumberId;
 };
 
-const getFlowId = async (): Promise<string> => {
-  const fromConfig = await getConfigValue<string>('flow_id');
-  return fromConfig || env.whatsapp.flowId;
+const getFlowId = (): string => {
+  return env.whatsapp.flowId;
 };
 
 const getFlowCta = async (): Promise<string> => {
@@ -43,7 +42,7 @@ const getFlowHeaderImage = async (): Promise<string> => {
 export const sendFlowMessage = async (to: string): Promise<boolean> => {
   try {
     const phoneNumberId = (await getPhoneNumberId())?.trim();
-    const flowId = (await getFlowId())?.trim();
+    const flowId = getFlowId()?.trim();
     const flowCta = await getFlowCta();
     const flowHeader = await getFlowHeader();
     const flowBody = await getFlowBody();
