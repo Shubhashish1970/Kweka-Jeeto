@@ -1,0 +1,28 @@
+# Run this workflow ONCE after generating keys to register the public key with Meta.
+# This enables RSA encryption for WhatsApp Flows endpoint mode.
+name: Upload Public Key (One-Time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload-public-key:
+    name: Register Public Key with Meta
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Upload public key to Meta
+        env:
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+        run: npm run upload:public-key
