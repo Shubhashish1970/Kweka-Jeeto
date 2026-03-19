@@ -230,7 +230,7 @@ export const getNextScreen = async (
   if (action === 'data_exchange') {
     switch (screen) {
       case 'FARMER_DETAILS':
-        return handleFarmerDetails(data);
+        return handleFarmerDetails(data, flowToken);
       case 'CROP_SELECTION':
         return handleCropSelection(data, flowToken);
       default:
@@ -293,7 +293,10 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
   };
 }
 
-function handleFarmerDetails(data: Record<string, unknown>): Record<string, unknown> {
+async function handleFarmerDetails(
+  data: Record<string, unknown>,
+  flowToken: string
+): Promise<Record<string, unknown>> {
   const state = String(data.state ?? '').toLowerCase().replace(/ /g, '_');
   const stateLabel = STATE_LABELS[state] ?? 'Your State';
   const cropOptions = STATE_CROPS[state] ?? DEFAULT_CROPS;
@@ -303,6 +306,27 @@ function handleFarmerDetails(data: Record<string, unknown>): Record<string, unkn
   // Strip 'image' from crop options — the flow JSON schema only declares id/title/description.
   // Meta validates responses against the schema and rejects extra fields.
   const cropOptionsForFlow = cropOptions.map(({ id, title, description }) => ({ id, title, description }));
+
+  // Look up existing farmer to prefill crop + advisory date for returning farmers
+  let pfCrop = '';
+  let pfAdvisoryDate = '';
+  const waId = decodeWaIdFromFlowToken(flowToken);
+  if (waId) {
+    try {
+      const existing = await getFarmerByWaId(waId);
+      if (existing) {
+        pfCrop = existing.crop || '';
+        if (existing.advisory_start_date) {
+          const d = new Date(existing.advisory_start_date as Date);
+          // DatePicker init-value expects YYYY-MM-DD
+          pfAdvisoryDate = d.toISOString().split('T')[0];
+        }
+        logger.info('Flow FARMER_DETAILS: prefill crop=%s date=%s for', pfCrop, pfAdvisoryDate, waId);
+      }
+    } catch (err) {
+      logger.warn('Flow FARMER_DETAILS: could not fetch existing farmer for prefill:', err);
+    }
+  }
 
   return {
     screen: 'CROP_SELECTION',
@@ -317,6 +341,9 @@ function handleFarmerDetails(data: Record<string, unknown>): Record<string, unkn
       state: data.state,
       state_label: stateLabel,
       district: data.district,
+      // Prefill existing crop and advisory date for returning farmers
+      pf_crop: pfCrop,
+      pf_advisory_start_date: pfAdvisoryDate,
     },
   };
 }

@@ -332,6 +332,14 @@
         "district": {
           "type": "string",
           "__example__": ""
+        },
+        "pf_crop": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_advisory_start_date": {
+          "type": "string",
+          "__example__": ""
         }
       },
       "layout": {
@@ -361,7 +369,8 @@
                 "name": "crop",
                 "label": "Select the crop you grow",
                 "required": true,
-                "data-source": "${data.crop_options}"
+                "data-source": "${data.crop_options}",
+                "init-value": "${data.pf_crop}"
               },
               {
                 "type": "DatePicker",
@@ -370,7 +379,8 @@
                 "required": true,
                 "helper-text": "When should daily tips begin?",
                 "min-date": "2020-01-01",
-                "max-date": "2035-12-31"
+                "max-date": "2035-12-31",
+                "init-value": "${data.pf_advisory_start_date}"
               },
               {
                 "type": "Footer",
