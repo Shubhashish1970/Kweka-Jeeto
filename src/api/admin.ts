@@ -81,6 +81,33 @@ adminRouter.get('/farmers', verifyAuth, async (req: Request, res: Response) => {
   }
 });
 
+adminRouter.put('/farmers/:id', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { farmer_name, age, profession, state, district, crop } = req.body;
+    const updated = await dataService.updateFarmer(req.params.id, {
+      farmer_name, age, profession, state, district, crop,
+    });
+    if (!updated) {
+      res.status(404).json({ error: 'Farmer not found' });
+      return;
+    }
+    res.json(updated);
+  } catch (err) {
+    logger.error('Update farmer error:', err);
+    res.status(500).json({ error: 'Failed to update farmer' });
+  }
+});
+
+adminRouter.delete('/farmers/:id', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    await dataService.deleteFarmer(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Delete farmer error:', err);
+    res.status(500).json({ error: 'Failed to delete farmer' });
+  }
+});
+
 adminRouter.get('/farmers/export', verifyAuth, async (req: Request, res: Response) => {
   try {
     const { state, crop, startDate, endDate } = req.query;

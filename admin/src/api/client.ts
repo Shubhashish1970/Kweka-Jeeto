@@ -54,6 +54,18 @@ export const api = {
     return JSON.parse(text) as T;
   },
 
+  async delete<T>(path: string): Promise<T> {
+    const res = await fetch(`${API_BASE}/api/admin${path}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getHeaders(),
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || res.statusText);
+    await checkJsonResponse(res, text);
+    return JSON.parse(text) as T;
+  },
+
   async getBlob(path: string): Promise<Blob> {
     const res = await fetch(`${API_BASE}/api/admin${path}`, {
       method: 'GET',

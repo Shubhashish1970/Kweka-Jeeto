@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Farmers from './pages/Farmers';
 import Reports from './pages/Reports';
 import Config from './pages/Config';
+import FarmerEdit from './pages/FarmerEdit';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated, authDisabled } = useAuth();
@@ -36,6 +37,7 @@ export default function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="farmers" element={<Farmers />} />
+          <Route path="farmers/:id/edit" element={<FarmerEdit />} />
           <Route path="reports" element={<Reports />} />
           <Route path="config" element={<Config />} />
         </Route>

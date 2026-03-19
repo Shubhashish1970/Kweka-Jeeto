@@ -47,6 +47,17 @@ export const getFarmerByWaId = async (waId: string): Promise<IFarmer | null> => 
   return Farmer.findOne({ wa_id: waId }).sort({ createdAt: -1 }).lean() as unknown as Promise<IFarmer | null>;
 };
 
+export const updateFarmerById = async (
+  id: string,
+  data: Partial<CreateFarmerData>
+): Promise<IFarmer | null> => {
+  return Farmer.findByIdAndUpdate(id, { $set: data }, { new: true }).lean() as unknown as Promise<IFarmer | null>;
+};
+
+export const deleteFarmerById = async (id: string): Promise<void> => {
+  await Farmer.findByIdAndDelete(id);
+};
+
 export const getFarmers = async (
   filter: FarmerFilter = {},
   options: PaginationOptions = {}

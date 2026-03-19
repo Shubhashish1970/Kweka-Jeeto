@@ -26,6 +26,8 @@ export const upsertFarmer = async (data: CreateFarmerInput): Promise<IFarmer> =>
 export const getFarmers = farmerRepo.getFarmers;
 export const getFarmersForExport = farmerRepo.getFarmersForExport;
 export const getFarmerCount = farmerRepo.getFarmerCount;
+export const updateFarmer = farmerRepo.updateFarmerById;
+export const deleteFarmer = farmerRepo.deleteFarmerById;
 
 export const getConfig = configRepo.getConfig;
 export const getConfigValue = configRepo.getConfigValue;
