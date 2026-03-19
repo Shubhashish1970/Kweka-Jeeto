@@ -1,0 +1,40 @@
+# Deletes all draft flows and deprecates old published flows.
+# Keeps only the latest PUBLISHED flow with data_api_version + endpoint_uri.
+# Prints the FLOW_ID to keep — update GitHub Secrets → FLOW_ID with this value, then re-run Deploy.
+name: Cleanup Old Flows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Cleanup Old WhatsApp Flows
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Cleanup flows
+        env:
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WABA_ID: ${{ secrets.WABA_ID }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npx ts-node scripts/cleanup-flows.ts
+
+      - name: Show FLOW_ID to keep
+        if: success()
+        run: |
+          FLOW_ID=$(cat .flow_id)
+          echo ""
+          echo "========================================="
+          echo "Update GitHub Secrets → FLOW_ID = $FLOW_ID"
+          echo "Then run: Actions → Deploy → Run workflow"
+          echo "========================================="
