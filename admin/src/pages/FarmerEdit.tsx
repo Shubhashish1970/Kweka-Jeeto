@@ -18,6 +18,7 @@ interface Farmer {
   state: string;
   district: string;
   crop: string;
+  advisory_start_date?: string;
   createdAt: string;
 }
 
@@ -87,6 +88,7 @@ export default function FarmerEdit() {
     state: '',
     district: '',
     crop: '',
+    advisory_start_date: '',
   });
   const [waId, setWaId] = useState('');
   const [loading, setLoading] = useState(true);
@@ -108,6 +110,9 @@ export default function FarmerEdit() {
           state: farmer.state,
           district: farmer.district,
           crop: farmer.crop,
+          advisory_start_date: farmer.advisory_start_date
+            ? new Date(farmer.advisory_start_date).toISOString().split('T')[0]
+            : '',
         });
       }
     }).finally(() => setLoading(false));
@@ -287,6 +292,16 @@ export default function FarmerEdit() {
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className={labelCls}>Advisory Start Date</label>
+                <input
+                  type="date"
+                  className={inputCls}
+                  value={form.advisory_start_date}
+                  onChange={(e) => handleChange('advisory_start_date', e.target.value)}
+                />
+                <p className="text-xs text-slate-400 mt-1">When daily advisory messages begin</p>
               </div>
             </div>
           </div>
