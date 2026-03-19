@@ -288,12 +288,16 @@ function handleFarmerDetails(data: Record<string, unknown>): Record<string, unkn
 
   logger.info('Flow FARMER_DETAILS: state=%s crops=%d', state, cropOptions.length);
 
+  // Strip 'image' from crop options — the flow JSON schema only declares id/title/description.
+  // Meta validates responses against the schema and rejects extra fields.
+  const cropOptionsForFlow = cropOptions.map(({ id, title, description }) => ({ id, title, description }));
+
   return {
     screen: 'CROP_SELECTION',
     data: {
       header_image_src: CROP_FIELD_IMAGE,
       crop_section_title: `Popular crops in ${stateLabel}`,
-      crop_options: cropOptions,
+      crop_options: cropOptionsForFlow,
       // Pass farmer details through to CROP_SELECTION so they're in the final payload
       farmer_name: data.farmer_name,
       age: data.age,

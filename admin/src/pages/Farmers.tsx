@@ -7,6 +7,12 @@ import ConfirmDialog from '../components/shared/ConfirmDialog';
 import Toast from '../components/shared/Toast';
 import { PAGE_INFO_BANNERS } from '../constants/pageInfoBanners';
 
+function formatMobile(waId: string): string {
+  if (/^91\d{10}$/.test(waId)) return `+91 ${waId.slice(2)}`;
+  if (/^1\d{10}$/.test(waId)) return `+1 ${waId.slice(1)}`;
+  return `+${waId}`;
+}
+
 interface Farmer {
   _id: string;
   wa_id: string;
@@ -162,7 +168,7 @@ export default function Farmers() {
                   {farmers.map((f) => (
                     <tr key={f._id} className="hover:bg-slate-50">
                       <td className="px-3 py-2 text-sm text-slate-900 font-medium truncate">{f.farmer_name}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700 truncate">+{f.wa_id}</td>
+                      <td className="px-3 py-2 text-sm text-slate-700 truncate">{formatMobile(f.wa_id)}</td>
                       <td className="px-3 py-2 text-sm text-slate-700">{f.age}</td>
                       <td className="px-3 py-2 text-sm text-slate-700 truncate">{f.state}</td>
                       <td className="px-3 py-2 text-sm text-slate-700 truncate">{f.district}</td>

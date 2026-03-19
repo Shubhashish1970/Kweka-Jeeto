@@ -63,6 +63,15 @@ const CROP_OPTIONS = [
   { value: 'tomato', label: 'Tomato' },
 ];
 
+/** Split wa_id (e.g. "917869911055") into "+91 9869911055" */
+function formatMobile(waId: string): { countryCode: string; local: string } {
+  if (/^91\d{10}$/.test(waId)) return { countryCode: '+91', local: waId.slice(2) };
+  if (/^1\d{10}$/.test(waId)) return { countryCode: '+1', local: waId.slice(1) };
+  if (/^\d{10}$/.test(waId)) return { countryCode: '', local: waId };
+  // generic: first 2 chars as code, rest as number
+  return { countryCode: `+${waId.slice(0, 2)}`, local: waId.slice(2) };
+}
+
 const inputCls =
   'w-full h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary';
 const labelCls = 'block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1';
@@ -168,9 +177,13 @@ export default function FarmerEdit() {
         {/* Title row */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900">Edit Farmer</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Mobile: <span className="font-medium text-slate-700">+{waId}</span>
-          </p>
+          {waId && (() => { const m = formatMobile(waId); return (
+            <p className="text-sm text-slate-500 mt-0.5">
+              Mobile:{' '}
+              <span className="font-medium text-slate-700">{m.countryCode}</span>{' '}
+              <span className="font-medium text-slate-700">{m.local}</span>
+            </p>
+          ); })()}
         </div>
 
         {/* Two-column grid */}
@@ -214,11 +227,20 @@ export default function FarmerEdit() {
               </div>
               <div>
                 <label className={labelCls}>Mobile Number</label>
-                <input
-                  className={`${inputCls} bg-slate-50 text-slate-500`}
-                  value={waId}
-                  readOnly
-                />
+                <div className="flex gap-2">
+                  <input
+                    className={`h-10 px-3 rounded-lg border border-slate-200 text-sm bg-slate-50 text-slate-500 w-20 text-center`}
+                    value={waId ? formatMobile(waId).countryCode : ''}
+                    readOnly
+                    title="Country code"
+                  />
+                  <input
+                    className={`h-10 px-3 rounded-lg border border-slate-200 text-sm bg-slate-50 text-slate-500 flex-1`}
+                    value={waId ? formatMobile(waId).local : ''}
+                    readOnly
+                    title="Local number"
+                  />
+                </div>
                 <p className="text-xs text-slate-400 mt-1">WhatsApp ID — cannot be changed</p>
               </div>
             </div>
