@@ -88,9 +88,6 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
             flow_id: flowId,
             flow_cta: flowCta,
             flow_action: 'data_exchange',
-            flow_action_payload: {
-              screen: 'WELCOME',
-            },
           },
         },
       },
