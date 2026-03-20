@@ -4,6 +4,7 @@
  * Pattern: Meta's personalised-offer example (getNextScreen routing).
  */
 import { getFarmerByWaId, upsertFarmer } from '../data/repositories/farmer.repository';
+import { getStateCrop } from '../data/repositories/stateCrop.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
 import {
@@ -54,7 +55,7 @@ function makeCrop(id: string, title: string, desc: string): CropOption {
   return img ? { id, title, description: desc, image: img } : { id, title, description: desc };
 }
 
-const STATE_CROPS: Record<string, CropOption[]> = {
+export const STATE_CROPS: Record<string, CropOption[]> = {
   punjab: [
     makeCrop('wheat', 'Wheat', 'Rabi crop • Harvested Mar–May'),
     makeCrop('paddy', 'Paddy (Rice)', 'Kharif crop • Harvested Oct–Nov'),
@@ -163,7 +164,7 @@ const DEFAULT_CROPS: CropOption[] = [
   makeCrop('chilli', 'Chilli', 'Both seasons • Harvested Oct–Feb'),
 ];
 
-const STATE_LABELS: Record<string, string> = {
+export const STATE_LABELS: Record<string, string> = {
   maharashtra: 'Maharashtra', punjab: 'Punjab', karnataka: 'Karnataka',
   uttar_pradesh: 'Uttar Pradesh', gujarat: 'Gujarat', rajasthan: 'Rajasthan',
   madhya_pradesh: 'Madhya Pradesh', andhra_pradesh: 'Andhra Pradesh',
@@ -299,9 +300,11 @@ async function handleFarmerDetails(
 ): Promise<Record<string, unknown>> {
   const state = String(data.state ?? '').toLowerCase().replace(/ /g, '_');
   const stateLabel = STATE_LABELS[state] ?? 'Your State';
-  const cropOptions = STATE_CROPS[state] ?? DEFAULT_CROPS;
 
-  logger.info('Flow FARMER_DETAILS: state=%s crops=%d', state, cropOptions.length);
+  const stateCropDoc = await getStateCrop(state);
+  const cropOptions = (stateCropDoc?.crops?.length ? stateCropDoc.crops : null) ?? STATE_CROPS[state] ?? DEFAULT_CROPS;
+
+  logger.info('Flow FARMER_DETAILS: state=%s crops=%d (source=%s)', state, cropOptions.length, stateCropDoc?.crops?.length ? 'db' : 'fallback');
 
   // Strip 'image' from crop options — the flow JSON schema only declares id/title/description.
   // Meta validates responses against the schema and rejects extra fields.

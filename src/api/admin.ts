@@ -186,3 +186,94 @@ adminRouter.put('/config', verifyAuth, async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to update config' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// State-Crops endpoints
+// ---------------------------------------------------------------------------
+
+adminRouter.get('/state-crops', verifyAuth, async (_req: Request, res: Response) => {
+  try {
+    const docs = await dataService.getAllStateCrops();
+    res.json(docs);
+  } catch (err) {
+    logger.error('Get state-crops error:', err);
+    res.status(500).json({ error: 'Failed to fetch state crops' });
+  }
+});
+
+adminRouter.get('/state-crops/:state', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const doc = await dataService.getStateCrop(req.params.state);
+    if (!doc) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Get state-crop error:', err);
+    res.status(500).json({ error: 'Failed to fetch state crop' });
+  }
+});
+
+adminRouter.put('/state-crops/:state', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { stateLabel, crops } = req.body;
+    if (!stateLabel || !Array.isArray(crops)) {
+      res.status(400).json({ error: 'stateLabel and crops array required' });
+      return;
+    }
+    const doc = await dataService.upsertStateCrop(req.params.state, stateLabel, crops);
+    res.json(doc);
+  } catch (err) {
+    logger.error('Upsert state-crop error:', err);
+    res.status(500).json({ error: 'Failed to update state crop' });
+  }
+});
+
+adminRouter.post('/state-crops/:state/crops', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { id, title, description } = req.body;
+    if (!id || !title || !description) {
+      res.status(400).json({ error: 'id, title, and description required' });
+      return;
+    }
+    const doc = await dataService.addCropToState(req.params.state, { id, title, description });
+    if (!doc) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Add crop to state error:', err);
+    res.status(500).json({ error: 'Failed to add crop' });
+  }
+});
+
+adminRouter.put('/state-crops/:state/crops/:cropId', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { id, title, description } = req.body;
+    const doc = await dataService.updateCropInState(req.params.state, req.params.cropId, { id, title, description });
+    if (!doc) {
+      res.status(404).json({ error: 'State or crop not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Update crop in state error:', err);
+    res.status(500).json({ error: 'Failed to update crop' });
+  }
+});
+
+adminRouter.delete('/state-crops/:state/crops/:cropId', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const doc = await dataService.deleteCropFromState(req.params.state, req.params.cropId);
+    if (!doc) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Delete crop from state error:', err);
+    res.status(500).json({ error: 'Failed to delete crop' });
+  }
+});

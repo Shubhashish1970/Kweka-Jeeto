@@ -23,4 +23,9 @@ export const PAGE_INFO_BANNERS: Record<
     description:
       'Configure WhatsApp Flow invite text and IDs. Saved values override environment variables. The preview shows how the chat invite and flow screens appear to users.',
   },
+  cropConfig: {
+    title: 'Crop Configuration',
+    description:
+      'Manage the list of crops shown per state in the WhatsApp registration flow. Changes take effect immediately — no deployment needed.',
+  },
 };

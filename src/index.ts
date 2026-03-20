@@ -10,6 +10,8 @@ import { cronRouter } from './api/cron';
 import { flowEndpointRouter } from './api/flow-endpoint';
 import { env } from './config/env';
 import { logger } from './utils/logger';
+import { seedStateCrops } from './services/data.service';
+import { STATE_CROPS, STATE_LABELS } from './services/flow-endpoint.service';
 
 const app = express();
 
@@ -42,9 +44,19 @@ app.get('/health', (_req, res) => {
 // Cloud Run: must listen on 0.0.0.0 (all interfaces), not 127.0.0.1 — see Cloud Run troubleshooting
 const server = app.listen(env.port, '0.0.0.0', () => {
   logger.info(`Server listening on port ${env.port}`);
-  connectDb().catch((err) => {
-    logger.error('MongoDB connect failed (server still up):', err);
-  });
+  connectDb()
+    .then(async () => {
+      const seedData = Object.entries(STATE_CROPS).map(([state, crops]) => ({
+        state,
+        stateLabel: STATE_LABELS[state] ?? state,
+        crops: crops.map(({ id, title, description }) => ({ id, title, description })),
+      }));
+      await seedStateCrops(seedData);
+      logger.info('State crops seeded (%d states)', seedData.length);
+    })
+    .catch((err) => {
+      logger.error('MongoDB connect failed (server still up):', err);
+    });
 });
 
 const shutdown = async () => {

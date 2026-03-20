@@ -7,6 +7,7 @@ const ROUTES: { path: string; label: string }[] = [
   { path: '/farmers', label: 'Farmers' },
   { path: '/reports', label: 'Reports' },
   { path: '/config', label: 'Config' },
+  { path: '/crop-config', label: 'Crop Config' },
 ];
 
 function getPageTitle(pathname: string): string {

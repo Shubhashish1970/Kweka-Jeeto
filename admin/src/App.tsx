@@ -7,6 +7,8 @@ import Farmers from './pages/Farmers';
 import Reports from './pages/Reports';
 import Config from './pages/Config';
 import FarmerEdit from './pages/FarmerEdit';
+import CropConfig from './pages/CropConfig';
+import CropConfigEdit from './pages/CropConfigEdit';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated, authDisabled } = useAuth();
@@ -40,6 +42,8 @@ export default function App() {
           <Route path="farmers/:id/edit" element={<FarmerEdit />} />
           <Route path="reports" element={<Reports />} />
           <Route path="config" element={<Config />} />
+          <Route path="crop-config" element={<CropConfig />} />
+          <Route path="crop-config/:state" element={<CropConfigEdit />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

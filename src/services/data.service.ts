@@ -1,6 +1,7 @@
 import * as farmerRepo from '../data/repositories/farmer.repository';
 import * as configRepo from '../data/repositories/config.repository';
 import * as auditRepo from '../data/repositories/audit.repository';
+import * as stateCropRepo from '../data/repositories/stateCrop.repository';
 import { IFarmer } from '../data/models/Farmer';
 
 export interface CreateFarmerInput {
@@ -36,3 +37,11 @@ export const setConfig = configRepo.setConfig;
 export const setConfigBulk = configRepo.setConfigBulk;
 
 export const logAudit = auditRepo.createAuditLog;
+
+export const getAllStateCrops = stateCropRepo.getAllStateCrops;
+export const getStateCrop = stateCropRepo.getStateCrop;
+export const upsertStateCrop = stateCropRepo.upsertStateCrop;
+export const addCropToState = stateCropRepo.addCropToState;
+export const updateCropInState = stateCropRepo.updateCropInState;
+export const deleteCropFromState = stateCropRepo.deleteCropFromState;
+export const seedStateCrops = stateCropRepo.seedStateCrops;
