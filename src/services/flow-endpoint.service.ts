@@ -264,7 +264,7 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
             button_label: 'Update Details',
             // Pre-fill data passed via navigate payload → FARMER_DETAILS Form init-values
             pf_farmer_name: existing.farmer_name || '',
-            pf_age: existing.age || '',
+            pf_age: parseInt(existing.age) || 0,
             pf_profession: existing.profession || '',
             pf_state: existing.state || '',
             pf_district: existing.district || '',
@@ -285,7 +285,7 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       button_label: 'Register Now',
       // Empty prefill for new farmers (data schema requires all declared fields)
       pf_farmer_name: '',
-      pf_age: '',
+      pf_age: 0,
       pf_profession: '',
       pf_state: '',
       pf_district: '',
