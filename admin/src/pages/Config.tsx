@@ -116,8 +116,8 @@ const SECTIONS: SectionDef[] = [
         reason: 'Stored as base64 in code (src/assets/images.ts). Changing it requires a code update and redeploy.',
       },
       {
-        label: 'Feature tiles (Crop advisory / Weather & tips / Watch intro)',
-        reason: 'Fixed components in the WhatsApp Flow JSON. Requires a Meta flow re-upload to change.',
+        label: '"What you get:" text',
+        reason: 'Hardcoded in the WhatsApp Flow JSON: "What you get: Daily crop care tips, local weather alerts, pest & disease warnings, market price updates, and sowing & harvest calendar." Requires a Meta flow re-upload to change.',
       },
     ],
   },
@@ -154,21 +154,21 @@ const SECTIONS: SectionDef[] = [
     fields: [
       {
         key: 'flow_crop_section_title',
-        label: 'Section title',
+        label: 'Sub-heading (below "Choose Your Crop")',
         type: 'text',
-        hint: 'Heading above the crop list.',
+        hint: 'Shown as the sub-heading under the hardcoded "Choose Your Crop" heading.',
         maxLength: 80,
         placeholders: ['{state}'],
       },
     ],
     lockedItems: [
       {
-        label: 'Crop options per state',
-        reason: 'Managed per-state in the Crop Config page.',
+        label: '"Choose Your Crop" heading',
+        reason: 'Hardcoded in the WhatsApp Flow JSON. Requires a Meta flow re-upload to change.',
       },
       {
-        label: 'Form field layout (name, age, profession, state, district)',
-        reason: 'Field structure is defined in the WhatsApp Flow JSON. Requires a Meta flow re-upload to change.',
+        label: 'Crop options per state',
+        reason: 'Managed per-state in the Crop Config page.',
       },
     ],
   },
@@ -459,7 +459,7 @@ export default function Config() {
                   <div style={{ flex: 1, overflow: 'auto', padding: 16, minHeight: 0, background: '#fff' }}>
                     {/* Step 0: WELCOME */}
                     {flowStep === 0 && (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <div className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/10] bg-slate-100">
                           <img
                             src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&q=80"
@@ -469,34 +469,20 @@ export default function Config() {
                         </div>
                         <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>{previewWelcomeTitle}</h2>
                         <p className="text-sm text-slate-600 leading-relaxed">{previewWelcomeBody}</p>
-                        <div className="space-y-3">
-                          {[
-                            { title: 'Crop advisory', sub: 'Get personalised crop tips', img: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=160&q=80' },
-                            { title: 'Weather & tips', sub: 'Local weather and alerts', img: 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=160&q=80' },
-                          ].map((tile) => (
-                            <div key={tile.title} className="rounded-xl border-2 border-slate-200 overflow-hidden flex bg-white">
-                              <div className="w-20 h-20 shrink-0 bg-slate-100">
-                                <img src={tile.img} alt={tile.title} className="w-full h-full object-cover" />
-                              </div>
-                              <div className="p-3 flex flex-col justify-center min-w-0">
-                                <p className="font-semibold text-slate-900 text-sm">{tile.title}</p>
-                                <p className="text-xs text-slate-500">{tile.sub}</p>
-                              </div>
-                            </div>
-                          ))}
-                          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2">
-                            <span className="text-slate-400 text-xs">
-                              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" /></svg>
-                            </span>
-                            <p className="text-xs text-slate-500 italic">Feature tiles are fixed in the Flow JSON</p>
-                          </div>
+                        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-start gap-2">
+                          <span className="text-slate-400 mt-0.5 shrink-0">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" /></svg>
+                          </span>
+                          <p className="text-xs text-slate-500 italic leading-relaxed">
+                            What you get: Daily crop care tips, local weather alerts, pest &amp; disease warnings, market price updates, and sowing &amp; harvest calendar.
+                          </p>
                         </div>
                       </div>
                     )}
 
                     {/* Step 1: FARMER_DETAILS */}
                     {flowStep === 1 && (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <div className="rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-100">
                           <img
                             src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&q=80"
@@ -504,27 +490,28 @@ export default function Config() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>Your details</h2>
-                        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2 mb-2">
+                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>Tell Us About Yourself</h2>
+                        <p className="text-sm text-slate-500">Help us personalize your crop advisory</p>
+                        <div className="space-y-2">
+                          {['Full Name', 'Age', 'Occupation', 'State', 'District / Village'].map((f) => (
+                            <div key={f}>
+                              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">{f}</label>
+                              <div className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 flex items-center text-sm text-slate-400">—</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2">
                           <span className="text-slate-400 text-xs shrink-0">
                             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" /></svg>
                           </span>
-                          <p className="text-xs text-slate-500 italic">Form field labels &amp; layout are fixed in the WhatsApp Flow JSON</p>
-                        </div>
-                        <div className="space-y-3">
-                          {['Name', 'Age', 'Profession', 'State', 'District'].map((f) => (
-                            <div key={f}>
-                              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">{f}</label>
-                              <div className="min-h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 flex items-center text-sm text-slate-400">—</div>
-                            </div>
-                          ))}
+                          <p className="text-xs text-slate-500 italic">Field labels &amp; layout are fixed in the WhatsApp Flow JSON</p>
                         </div>
                       </div>
                     )}
 
                     {/* Step 2: CROP_SELECTION */}
                     {flowStep === 2 && (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <div className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/9] bg-slate-100">
                           <img
                             src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&q=80"
@@ -532,7 +519,8 @@ export default function Config() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 16 }}>{previewCropTitle}</h2>
+                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>Choose Your Crop</h2>
+                        <p className="text-sm text-slate-500">{previewCropTitle}</p>
                         <div className="space-y-2">
                           {['Cotton', 'Paddy (Rice)', 'Wheat', 'Maize', 'Chilli'].map((crop) => (
                             <div key={crop} className="rounded-lg border border-slate-200 px-3 py-2 flex items-center gap-2 bg-white">
@@ -541,7 +529,7 @@ export default function Config() {
                             </div>
                           ))}
                         </div>
-                        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2">
+                        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2">
                           <span className="text-slate-400 text-xs shrink-0">
                             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" /></svg>
                           </span>
