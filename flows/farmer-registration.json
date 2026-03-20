@@ -38,8 +38,8 @@
           "__example__": ""
         },
         "pf_age": {
-          "type": "string",
-          "__example__": ""
+          "type": "number",
+          "__example__": 0
         },
         "pf_profession": {
           "type": "string",
