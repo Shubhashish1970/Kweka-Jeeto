@@ -32,6 +32,26 @@
         "button_label": {
           "type": "string",
           "__example__": "Register Now"
+        },
+        "pf_farmer_name": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_age": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_profession": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_state": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_district": {
+          "type": "string",
+          "__example__": ""
         }
       },
       "layout": {
@@ -64,6 +84,13 @@
               "next": {
                 "type": "screen",
                 "name": "FARMER_DETAILS"
+              },
+              "payload": {
+                "pf_farmer_name": "${data.pf_farmer_name}",
+                "pf_age": "${data.pf_age}",
+                "pf_profession": "${data.pf_profession}",
+                "pf_state": "${data.pf_state}",
+                "pf_district": "${data.pf_district}"
               }
             }
           }
@@ -73,7 +100,28 @@
     {
       "id": "FARMER_DETAILS",
       "title": "Your Details",
-      "data": {},
+      "data": {
+        "pf_farmer_name": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_age": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_profession": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_state": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_district": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
       "layout": {
         "type": "SingleColumnLayout",
         "children": [
@@ -210,7 +258,14 @@
                   }
                 }
               }
-            ]
+            ],
+            "init-values": {
+              "farmer_name": "${data.pf_farmer_name}",
+              "age": "${data.pf_age}",
+              "profession": "${data.pf_profession}",
+              "state": "${data.pf_state}",
+              "district": "${data.pf_district}"
+            }
           }
         ]
       }
@@ -279,6 +334,14 @@
         "district": {
           "type": "string",
           "__example__": ""
+        },
+        "pf_crop": {
+          "type": "string",
+          "__example__": ""
+        },
+        "pf_advisory_start_date": {
+          "type": "string",
+          "__example__": ""
         }
       },
       "layout": {
@@ -335,7 +398,11 @@
                   }
                 }
               }
-            ]
+            ],
+            "init-values": {
+              "crop": "${data.pf_crop}",
+              "advisory_start_date": "${data.pf_advisory_start_date}"
+            }
           }
         ]
       }

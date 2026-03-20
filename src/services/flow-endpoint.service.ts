@@ -262,6 +262,12 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
             welcome_title: `Welcome back, ${existing.farmer_name}! 🌾`,
             welcome_body: `You're registered for ${cropLabel(existing.crop)} advisory. You can update your details below.`,
             button_label: 'Update Details',
+            // Pre-fill data passed via navigate payload → FARMER_DETAILS Form init-values
+            pf_farmer_name: existing.farmer_name || '',
+            pf_age: existing.age || '',
+            pf_profession: existing.profession || '',
+            pf_state: existing.state || '',
+            pf_district: existing.district || '',
           },
         };
       }
@@ -277,13 +283,19 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       welcome_title: 'Welcome to Kweka Jeeto! 🌾',
       welcome_body: 'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
       button_label: 'Register Now',
+      // Empty prefill for new farmers (data schema requires all declared fields)
+      pf_farmer_name: '',
+      pf_age: '',
+      pf_profession: '',
+      pf_state: '',
+      pf_district: '',
     },
   };
 }
 
 async function handleFarmerDetails(
   data: Record<string, unknown>,
-  _flowToken: string
+  flowToken: string
 ): Promise<Record<string, unknown>> {
   const state = String(data.state ?? '').toLowerCase().replace(/ /g, '_');
   const stateLabel = STATE_LABELS[state] ?? 'Your State';
@@ -294,6 +306,25 @@ async function handleFarmerDetails(
   // Strip 'image' from crop options — the flow JSON schema only declares id/title/description.
   // Meta validates responses against the schema and rejects extra fields.
   const cropOptionsForFlow = cropOptions.map(({ id, title, description }) => ({ id, title, description }));
+
+  // Look up existing crop + advisory date to pre-fill CROP_SELECTION via Form init-values
+  let pfCrop = '';
+  let pfAdvisoryDate = '';
+  const waId = decodeWaIdFromFlowToken(flowToken);
+  if (waId) {
+    try {
+      const existing = await getFarmerByWaId(waId);
+      if (existing) {
+        pfCrop = existing.crop || '';
+        if (existing.advisory_start_date) {
+          pfAdvisoryDate = new Date(existing.advisory_start_date as Date).toISOString().split('T')[0];
+        }
+        logger.info('Flow FARMER_DETAILS: prefill crop=%s date=%s for %s', pfCrop, pfAdvisoryDate, waId);
+      }
+    } catch (err) {
+      logger.warn('Flow FARMER_DETAILS: could not fetch existing farmer for prefill:', err);
+    }
+  }
 
   return {
     screen: 'CROP_SELECTION',
@@ -308,6 +339,9 @@ async function handleFarmerDetails(
       state: data.state,
       state_label: stateLabel,
       district: data.district,
+      // Pre-fill existing crop and advisory date via CROP_SELECTION Form init-values
+      pf_crop: pfCrop,
+      pf_advisory_start_date: pfAdvisoryDate,
     },
   };
 }
