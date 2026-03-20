@@ -52,6 +52,10 @@
         "pf_district": {
           "type": "string",
           "__example__": ""
+        },
+        "pf_language": {
+          "type": "string",
+          "__example__": "en"
         }
       },
       "layout": {
@@ -90,7 +94,8 @@
                 "pf_age": "${data.pf_age}",
                 "pf_profession": "${data.pf_profession}",
                 "pf_state": "${data.pf_state}",
-                "pf_district": "${data.pf_district}"
+                "pf_district": "${data.pf_district}",
+                "pf_language": "${data.pf_language}"
               }
             }
           }
@@ -120,6 +125,10 @@
         "pf_district": {
           "type": "string",
           "__example__": ""
+        },
+        "pf_language": {
+          "type": "string",
+          "__example__": "en"
         }
       },
       "layout": {
@@ -245,6 +254,34 @@
                 "helper-text": "Helps us localize your advisory"
               },
               {
+                "type": "Dropdown",
+                "name": "language",
+                "label": "Preferred Language",
+                "required": true,
+                "data-source": [
+                  {
+                    "id": "en",
+                    "title": "English"
+                  },
+                  {
+                    "id": "hi",
+                    "title": "हिंदी (Hindi)"
+                  },
+                  {
+                    "id": "mr",
+                    "title": "मराठी (Marathi)"
+                  },
+                  {
+                    "id": "te",
+                    "title": "తెలుగు (Telugu)"
+                  },
+                  {
+                    "id": "bn",
+                    "title": "বাংলা (Bengali)"
+                  }
+                ]
+              },
+              {
                 "type": "Footer",
                 "label": "Continue",
                 "on-click-action": {
@@ -254,7 +291,8 @@
                     "age": "${form.age}",
                     "profession": "${form.profession}",
                     "state": "${form.state}",
-                    "district": "${form.district}"
+                    "district": "${form.district}",
+                    "language": "${form.language}"
                   }
                 }
               }
@@ -264,7 +302,8 @@
               "age": "${data.pf_age}",
               "profession": "${data.pf_profession}",
               "state": "${data.pf_state}",
-              "district": "${data.pf_district}"
+              "district": "${data.pf_district}",
+              "language": "${data.pf_language}"
             }
           }
         ]
@@ -342,6 +381,10 @@
         "pf_advisory_start_date": {
           "type": "string",
           "__example__": ""
+        },
+        "language": {
+          "type": "string",
+          "__example__": "en"
         }
       },
       "layout": {
@@ -394,7 +437,8 @@
                     "state": "${data.state}",
                     "district": "${data.district}",
                     "crop": "${form.crop}",
-                    "advisory_start_date": "${form.advisory_start_date}"
+                    "advisory_start_date": "${form.advisory_start_date}",
+                    "language": "${data.language}"
                   }
                 }
               }

@@ -23,6 +23,7 @@ export interface CreateFarmerData {
   crop: string;
   advisory_start_date?: Date;
   flow_token?: string;
+  language?: string;
 }
 
 export const createFarmer = async (data: CreateFarmerData): Promise<IFarmer> => {

@@ -5,34 +5,133 @@ import Button from '../components/shared/Button';
 import { PAGE_INFO_BANNERS } from '../constants/pageInfoBanners';
 
 // ---------------------------------------------------------------------------
-// Defaults (match backend fallbacks)
+// Language support (mirrors src/utils/i18n.ts)
+// ---------------------------------------------------------------------------
+const SUPPORTED_LANGUAGES: Record<string, string> = {
+  en: 'English',
+  hi: 'हिंदी',
+  mr: 'मराठी',
+  te: 'తెలుగు',
+  bn: 'বাংলা',
+};
+type Language = keyof typeof SUPPORTED_LANGUAGES;
+const LANGUAGE_KEYS = Object.keys(SUPPORTED_LANGUAGES) as Language[];
+
+// The 10 flow screen text keys that support multiple languages
+const MULTILINGUAL_KEYS = [
+  'flow_welcome_title',
+  'flow_welcome_body',
+  'flow_welcome_button_label',
+  'flow_returning_title',
+  'flow_returning_body',
+  'flow_returning_button_label',
+  'flow_crop_section_title',
+  'flow_success_heading',
+  'flow_success_body',
+  'flow_completion_message',
+];
+
+// Built-in defaults (match src/utils/i18n.ts DEFAULT_STRINGS)
+const DEFAULT_STRINGS: Record<Language, Record<string, string>> = {
+  en: {
+    flow_welcome_title: 'Welcome to Kweka Jeeto! 🌾',
+    flow_welcome_body:
+      'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
+    flow_welcome_button_label: 'Register Now',
+    flow_returning_title: 'Welcome back, {name}! 🌾',
+    flow_returning_body:
+      "You're registered for {crop} advisory. You can update your details below.",
+    flow_returning_button_label: 'Update Details',
+    flow_crop_section_title: 'Popular crops in {state}',
+    flow_success_heading: "You're All Set, {name}! 🌾",
+    flow_success_body:
+      "Daily *{crop}* advisory will arrive every morning starting {date}. You'll get tips on watering, fertilizers, pest control & market prices tailored to your farm.",
+    flow_completion_message:
+      "✅ Registration complete! Hello {name}, you'll receive daily *{crop}* advisory starting {date}. Check your WhatsApp every morning for personalized tips. Welcome to Kweka Jeeto! 🌾",
+  },
+  hi: {
+    flow_welcome_title: 'Kweka Jeeto में आपका स्वागत है! 🌾',
+    flow_welcome_body:
+      'WhatsApp पर व्यक्तिगत दैनिक फसल सलाह पाएं — स्थानीय कृषि विशेषज्ञता द्वारा संचालित। एक मिनट से भी कम समय में पंजीकरण करें।',
+    flow_welcome_button_label: 'अभी पंजीकरण करें',
+    flow_returning_title: 'वापस आने पर स्वागत, {name}! 🌾',
+    flow_returning_body:
+      'आप {crop} सलाह के लिए पंजीकृत हैं। आप नीचे अपना विवरण अपडेट कर सकते हैं।',
+    flow_returning_button_label: 'विवरण अपडेट करें',
+    flow_crop_section_title: '{state} में लोकप्रिय फसलें',
+    flow_success_heading: 'आप तैयार हैं, {name}! 🌾',
+    flow_success_body:
+      'दैनिक *{crop}* सलाह {date} से हर सुबह आएगी। आपको पानी, खाद, कीट नियंत्रण और बाज़ार भाव पर व्यक्तिगत सुझाव मिलेंगे।',
+    flow_completion_message:
+      '✅ पंजीकरण पूर्ण! नमस्ते {name}, आपको {date} से दैनिक *{crop}* सलाह मिलेगी। व्यक्तिगत सुझावों के लिए हर सुबह अपना WhatsApp देखें। Kweka Jeeto में आपका स्वागत है! 🌾',
+  },
+  mr: {
+    flow_welcome_title: 'Kweka Jeeto मध्ये आपले स्वागत आहे! 🌾',
+    flow_welcome_body:
+      'WhatsApp वर वैयक्तिक दैनंदिन पीक सल्ला मिळवा — स्थानिक शेती तज्ञतेद्वारे. एक मिनिटापेक्षा कमी वेळात नोंदणी करा.',
+    flow_welcome_button_label: 'आता नोंदणी करा',
+    flow_returning_title: 'परत आल्याबद्दल स्वागत, {name}! 🌾',
+    flow_returning_body:
+      'तुम्ही {crop} सल्ल्यासाठी नोंदणीकृत आहात. तुम्ही खाली तुमचे तपशील अपडेट करू शकता.',
+    flow_returning_button_label: 'तपशील अपडेट करा',
+    flow_crop_section_title: '{state} मधील लोकप्रिय पिके',
+    flow_success_heading: 'तुम्ही तयार आहात, {name}! 🌾',
+    flow_success_body:
+      'दैनंदिन *{crop}* सल्ला {date} पासून दररोज सकाळी येईल. तुम्हाला पाणी, खते, कीड नियंत्रण आणि बाजारभाव यावर वैयक्तिक टिप्स मिळतील.',
+    flow_completion_message:
+      '✅ नोंदणी पूर्ण! नमस्कार {name}, तुम्हाला {date} पासून दैनंदिन *{crop}* सल्ला मिळेल. वैयक्तिक टिप्ससाठी दररोज सकाळी WhatsApp तपासा. Kweka Jeeto मध्ये स्वागत आहे! 🌾',
+  },
+  te: {
+    flow_welcome_title: 'Kweka Jeeto కి స్వాగతం! 🌾',
+    flow_welcome_body:
+      'WhatsApp లో వ్యక్తిగత రోజువారీ పంట సలహా పొందండి — స్థానిక వ్యవసాయ నిపుణత ద్వారా. ఒక నిమిషం కంటే తక్కువ సమయంలో నమోదు చేసుకోండి.',
+    flow_welcome_button_label: 'ఇప్పుడు నమోదు చేయండి',
+    flow_returning_title: 'తిరిగి స్వాగతం, {name}! 🌾',
+    flow_returning_body:
+      'మీరు {crop} సలహా కోసం నమోదు చేసుకున్నారు. మీరు క్రింద మీ వివరాలను అప్‌డేట్ చేయవచ్చు.',
+    flow_returning_button_label: 'వివరాలు అప్‌డేట్ చేయండి',
+    flow_crop_section_title: '{state} లో ప్రముఖ పంటలు',
+    flow_success_heading: 'మీరు సిద్ధంగా ఉన్నారు, {name}! 🌾',
+    flow_success_body:
+      'రోజువారీ *{crop}* సలహా {date} నుండి ప్రతి ఉదయం వస్తుంది. నీటి, ఎరువులు, చీడపీడల నియంత్రణ మరియు మార్కెట్ ధరలపై వ్యక్తిగత చిట్కాలు మీకు అందుతాయి.',
+    flow_completion_message:
+      '✅ నమోదు పూర్తైంది! నమస్కారం {name}, మీకు {date} నుండి రోజువారీ *{crop}* సలహా వస్తుంది. వ్యక్తిగత చిట్కాల కోసం ప్రతి ఉదయం WhatsApp చెక్ చేయండి. Kweka Jeeto కి స్వాగతం! 🌾',
+  },
+  bn: {
+    flow_welcome_title: 'Kweka Jeeto তে আপনাকে স্বাগতম! 🌾',
+    flow_welcome_body:
+      'WhatsApp এ ব্যক্তিগত দৈনিক ফসল পরামর্শ পান — স্থানীয় কৃষি বিশেষজ্ঞতা দ্বারা পরিচালিত। এক মিনিটের কম সময়ে নিবন্ধন করুন।',
+    flow_welcome_button_label: 'এখনই নিবন্ধন করুন',
+    flow_returning_title: 'ফিরে আসার স্বাগতম, {name}! 🌾',
+    flow_returning_body:
+      'আপনি {crop} পরামর্শের জন্য নিবন্ধিত আছেন। আপনি নীচে আপনার বিবরণ আপডেট করতে পারেন।',
+    flow_returning_button_label: 'বিবরণ আপডেট করুন',
+    flow_crop_section_title: '{state} এ জনপ্রিয় ফসল',
+    flow_success_heading: 'আপনি প্রস্তুত, {name}! 🌾',
+    flow_success_body:
+      'দৈনিক *{crop}* পরামর্শ {date} থেকে প্রতি সকালে আসবে। আপনি জল দেওয়া, সার, কীটপতঙ্গ নিয়ন্ত্রণ ও বাজার মূল্যে ব্যক্তিগত পরামর্শ পাবেন।',
+    flow_completion_message:
+      '✅ নিবন্ধন সম্পূর্ণ! নমস্কার {name}, আপনি {date} থেকে দৈনিক *{crop}* পরামর্শ পাবেন। ব্যক্তিগত পরামর্শের জন্য প্রতি সকালে WhatsApp চেক করুন। Kweka Jeeto তে স্বাগতম! 🌾',
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Defaults for non-multilingual keys
 // ---------------------------------------------------------------------------
 const DEFAULT_CONFIG: Record<string, string> = {
-  // Chat invite message
   flow_cta: 'Register',
-  flow_header: 'कृषि सलाह / Agri Advisory',
+  flow_header: 'কৃষি সলাহ / Agri Advisory',
   flow_body: 'Register to get crop advisory.',
-  // Welcome — new farmer
-  flow_welcome_title: 'Welcome to Kweka Jeeto! 🌾',
-  flow_welcome_body: 'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
-  flow_welcome_button_label: 'Register Now',
-  // Welcome — returning farmer
-  flow_returning_title: 'Welcome back, {name}! 🌾',
-  flow_returning_body: "You're registered for {crop} advisory. You can update your details below.",
-  flow_returning_button_label: 'Update Details',
-  // Crop selection
-  flow_crop_section_title: 'Popular crops in {state}',
-  // Success screen
-  flow_success_heading: "You're All Set, {name}! 🌾",
-  flow_success_body: "Daily *{crop}* advisory will arrive every morning starting {date}. You'll get tips on watering, fertilizers, pest control & market prices tailored to your farm.",
-  // Post-submit WhatsApp message
-  flow_completion_message: "✅ Registration complete! Hello {name}, you'll receive daily *{crop}* advisory starting {date}. Check your WhatsApp every morning for personalized tips. Welcome to Kweka Jeeto! 🌾",
-  // WhatsApp
   whatsapp_phone_number_id: '',
 };
 
-// All editable config keys (for API loading)
-const ALL_CONFIG_KEYS = Object.keys(DEFAULT_CONFIG);
+const ALL_CONFIG_KEYS = [
+  ...MULTILINGUAL_KEYS,
+  'flow_cta',
+  'flow_header',
+  'flow_body',
+  'whatsapp_phone_number_id',
+];
 
 // ---------------------------------------------------------------------------
 // Section definitions
@@ -44,6 +143,7 @@ interface FieldDef {
   hint: string;
   maxLength?: number;
   placeholders?: string[];
+  multilingual?: boolean;
 }
 
 interface LockedItemDef {
@@ -94,6 +194,7 @@ const SECTIONS: SectionDef[] = [
         type: 'text',
         hint: 'Heading shown at the top of the WELCOME screen for first-time users.',
         maxLength: 80,
+        multilingual: true,
       },
       {
         key: 'flow_welcome_body',
@@ -101,6 +202,7 @@ const SECTIONS: SectionDef[] = [
         type: 'textarea',
         hint: 'Introductory paragraph below the title.',
         maxLength: 500,
+        multilingual: true,
       },
       {
         key: 'flow_welcome_button_label',
@@ -108,6 +210,7 @@ const SECTIONS: SectionDef[] = [
         type: 'text',
         hint: 'Text on the action button at the bottom.',
         maxLength: 20,
+        multilingual: true,
       },
     ],
     lockedItems: [
@@ -131,6 +234,7 @@ const SECTIONS: SectionDef[] = [
         hint: 'Heading for users who are already registered.',
         maxLength: 80,
         placeholders: ['{name}', '{crop}'],
+        multilingual: true,
       },
       {
         key: 'flow_returning_body',
@@ -139,6 +243,7 @@ const SECTIONS: SectionDef[] = [
         hint: 'Paragraph shown below the returning-farmer title.',
         maxLength: 500,
         placeholders: ['{name}', '{crop}'],
+        multilingual: true,
       },
       {
         key: 'flow_returning_button_label',
@@ -146,6 +251,7 @@ const SECTIONS: SectionDef[] = [
         type: 'text',
         hint: 'Text on the action button for returning farmers.',
         maxLength: 20,
+        multilingual: true,
       },
     ],
   },
@@ -159,6 +265,7 @@ const SECTIONS: SectionDef[] = [
         hint: 'Shown as the sub-heading under the hardcoded "Choose Your Crop" heading.',
         maxLength: 80,
         placeholders: ['{state}'],
+        multilingual: true,
       },
     ],
     lockedItems: [
@@ -182,6 +289,7 @@ const SECTIONS: SectionDef[] = [
         hint: 'Large heading shown after successful registration.',
         maxLength: 80,
         placeholders: ['{name}', '{crop}', '{date}'],
+        multilingual: true,
       },
       {
         key: 'flow_success_body',
@@ -190,6 +298,7 @@ const SECTIONS: SectionDef[] = [
         hint: 'Paragraph below the success heading.',
         maxLength: 500,
         placeholders: ['{name}', '{crop}', '{date}'],
+        multilingual: true,
       },
     ],
     lockedItems: [
@@ -209,6 +318,7 @@ const SECTIONS: SectionDef[] = [
         hint: 'WhatsApp text message sent automatically after the farmer submits the flow.',
         maxLength: 500,
         placeholders: ['{name}', '{crop}', '{date}'],
+        multilingual: true,
       },
     ],
   },
@@ -273,7 +383,13 @@ type PreviewMode = 'chat' | 'flow';
 // Main component
 // ---------------------------------------------------------------------------
 export default function Config() {
+  // Regular (non-multilingual) config values
   const [config, setConfig] = useState<Record<string, string>>({});
+  // Multilingual config: key → { en: '...', hi: '...', ... }
+  const [mlConfig, setMlConfig] = useState<Record<string, Record<Language, string>>>({});
+  // Currently edited language tab
+  const [editLang, setEditLang] = useState<Language>('en');
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -284,13 +400,43 @@ export default function Config() {
     api
       .get<Record<string, unknown>>('/config')
       .then((r) => {
-        const out: Record<string, string> = {};
+        const plainConfig: Record<string, string> = {};
+        const multiConfig: Record<string, Record<Language, string>> = {};
+
         for (const k of ALL_CONFIG_KEYS) {
           const v = r[k];
-          const raw = v != null ? String(v).trim() : '';
-          out[k] = raw !== '' ? raw : (DEFAULT_CONFIG[k] ?? '');
+          if (MULTILINGUAL_KEYS.includes(k)) {
+            // Build locale map for this key
+            const map: Record<Language, string> = {} as Record<Language, string>;
+            if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+              // DB has a locale-map object
+              for (const lang of LANGUAGE_KEYS) {
+                const t = (v as Record<string, unknown>)[lang];
+                map[lang] = typeof t === 'string' && t.trim() !== ''
+                  ? t
+                  : DEFAULT_STRINGS[lang][k] ?? '';
+              }
+            } else if (typeof v === 'string' && v.trim() !== '') {
+              // Legacy plain string — treat as English, use built-ins for rest
+              map['en'] = v;
+              for (const lang of LANGUAGE_KEYS.filter((l) => l !== 'en')) {
+                map[lang] = DEFAULT_STRINGS[lang][k] ?? '';
+              }
+            } else {
+              // Missing — use built-ins for all languages
+              for (const lang of LANGUAGE_KEYS) {
+                map[lang] = DEFAULT_STRINGS[lang][k] ?? '';
+              }
+            }
+            multiConfig[k] = map;
+          } else {
+            const raw = v != null ? String(v).trim() : '';
+            plainConfig[k] = raw !== '' ? raw : (DEFAULT_CONFIG[k] ?? '');
+          }
         }
-        setConfig(out);
+
+        setConfig(plainConfig);
+        setMlConfig(multiConfig);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -299,7 +445,11 @@ export default function Config() {
     setSaving(true);
     setMessage('');
     try {
-      await api.put('/config', config);
+      const savePayload: Record<string, unknown> = { ...config };
+      for (const k of MULTILINGUAL_KEYS) {
+        savePayload[k] = mlConfig[k] ?? {};
+      }
+      await api.put('/config', savePayload);
       setMessage('Saved successfully');
     } catch {
       setMessage('Failed to save');
@@ -308,19 +458,34 @@ export default function Config() {
     }
   };
 
+  const mlVal = (key: string, lang: Language = editLang): string =>
+    mlConfig[key]?.[lang] ?? DEFAULT_STRINGS[lang]?.[key] ?? '';
+
   const val = (key: string) => config[key] ?? DEFAULT_CONFIG[key] ?? '';
 
-  // Preview computed values
+  // Preview computed values — use editLang for multilingual keys
   const previewHeader = val('flow_header') || 'कृषि सलाह / Agri Advisory';
   const previewBody = val('flow_body') || 'Register to get crop advisory.';
   const previewCta = val('flow_cta') || 'Register';
-  const previewCompletion = applyPreview(val('flow_completion_message') || DEFAULT_CONFIG.flow_completion_message, PREVIEW_VARS);
-  const previewWelcomeTitle = val('flow_welcome_title') || DEFAULT_CONFIG.flow_welcome_title;
-  const previewWelcomeBody = val('flow_welcome_body') || DEFAULT_CONFIG.flow_welcome_body;
-  const previewWelcomeButton = val('flow_welcome_button_label') || DEFAULT_CONFIG.flow_welcome_button_label;
-  const previewCropTitle = applyPreview(val('flow_crop_section_title') || DEFAULT_CONFIG.flow_crop_section_title, PREVIEW_VARS);
-  const previewSuccessHeading = applyPreview(val('flow_success_heading') || DEFAULT_CONFIG.flow_success_heading, PREVIEW_VARS);
-  const previewSuccessBody = applyPreview(val('flow_success_body') || DEFAULT_CONFIG.flow_success_body, PREVIEW_VARS);
+  const previewCompletion = applyPreview(
+    mlVal('flow_completion_message') || DEFAULT_STRINGS[editLang].flow_completion_message,
+    PREVIEW_VARS
+  );
+  const previewWelcomeTitle = mlVal('flow_welcome_title') || DEFAULT_STRINGS[editLang].flow_welcome_title;
+  const previewWelcomeBody = mlVal('flow_welcome_body') || DEFAULT_STRINGS[editLang].flow_welcome_body;
+  const previewWelcomeButton = mlVal('flow_welcome_button_label') || DEFAULT_STRINGS[editLang].flow_welcome_button_label;
+  const previewCropTitle = applyPreview(
+    mlVal('flow_crop_section_title') || DEFAULT_STRINGS[editLang].flow_crop_section_title,
+    PREVIEW_VARS
+  );
+  const previewSuccessHeading = applyPreview(
+    mlVal('flow_success_heading') || DEFAULT_STRINGS[editLang].flow_success_heading,
+    PREVIEW_VARS
+  );
+  const previewSuccessBody = applyPreview(
+    mlVal('flow_success_body') || DEFAULT_STRINGS[editLang].flow_success_body,
+    PREVIEW_VARS
+  );
 
   if (loading) return <p className="text-slate-600">Loading...</p>;
 
@@ -336,6 +501,30 @@ export default function Config() {
       <div className="flex flex-wrap gap-8 items-start">
         {/* ── Left: Sectioned form ── */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-[520px] min-w-[300px] flex-1">
+
+          {/* ── Language tab bar (for multilingual fields) ── */}
+          <div className="mb-6 pb-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+              Language for Flow Screen Text
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {LANGUAGE_KEYS.map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setEditLang(lang)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    editLang === lang
+                      ? 'bg-primary text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {SUPPORTED_LANGUAGES[lang]}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {SECTIONS.map((section) => (
             <div key={section.title} className="mb-6">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">
@@ -344,15 +533,33 @@ export default function Config() {
               {section.note && (
                 <p className="text-xs text-slate-500 italic mb-3">{section.note}</p>
               )}
-              {section.fields.map(({ key, label, type, hint, maxLength, placeholders }) => {
-                const value = config[key] ?? '';
+              {section.fields.map(({ key, label, type, hint, maxLength, placeholders, multilingual }) => {
+                const isML = multilingual === true;
+                const value = isML ? (mlConfig[key]?.[editLang] ?? '') : (config[key] ?? '');
                 const len = value.length;
                 const atLimit = maxLength != null && len >= maxLength;
+
+                const handleChange = (newVal: string) => {
+                  if (isML) {
+                    setMlConfig((prev) => ({
+                      ...prev,
+                      [key]: { ...prev[key], [editLang]: newVal },
+                    }));
+                  } else {
+                    setConfig((c) => ({ ...c, [key]: newVal }));
+                  }
+                };
+
                 return (
-                  <div key={key} className="mb-4">
+                  <div key={`${key}-${editLang}`} className="mb-4">
                     <div className="flex items-baseline justify-between gap-2 mb-1">
                       <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
                         {label}
+                        {isML && (
+                          <span className="ml-1.5 normal-case font-normal text-primary/70 tracking-normal">
+                            · {SUPPORTED_LANGUAGES[editLang]}
+                          </span>
+                        )}
                       </label>
                       {maxLength != null && (
                         <span className={`text-xs tabular-nums shrink-0 ${atLimit ? 'text-amber-600 font-medium' : 'text-slate-400'}`}>
@@ -365,7 +572,7 @@ export default function Config() {
                     {type === 'textarea' ? (
                       <textarea
                         value={value}
-                        onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
+                        onChange={(e) => handleChange(e.target.value)}
                         maxLength={maxLength}
                         rows={3}
                         className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary resize-y"
@@ -373,7 +580,7 @@ export default function Config() {
                     ) : (
                       <input
                         value={value}
-                        onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
+                        onChange={(e) => handleChange(e.target.value)}
                         maxLength={maxLength}
                         className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       />
@@ -418,6 +625,13 @@ export default function Config() {
               Flow screens
             </button>
           </div>
+
+          {/* Language indicator for preview */}
+          {previewMode === 'flow' && (
+            <p className="text-xs text-slate-500 mb-2">
+              Previewing: <span className="font-medium text-primary">{SUPPORTED_LANGUAGES[editLang]}</span>
+            </p>
+          )}
 
           {/* iPhone wireframe */}
           <div
@@ -493,7 +707,7 @@ export default function Config() {
                         <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>Tell Us About Yourself</h2>
                         <p className="text-sm text-slate-500">Help us personalize your crop advisory</p>
                         <div className="space-y-2">
-                          {['Full Name', 'Age', 'Occupation', 'State', 'District / Village'].map((f) => (
+                          {['Preferred Language', 'Full Name', 'Age', 'Occupation', 'State', 'District / Village'].map((f) => (
                             <div key={f}>
                               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">{f}</label>
                               <div className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 flex items-center text-sm text-slate-400">—</div>

@@ -9,6 +9,12 @@ import { getConfigValue } from '../data/repositories/config.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
 import {
+  DEFAULT_LANGUAGE,
+  validateLanguage,
+  getLocalizedString,
+  type Language,
+} from '../utils/i18n';
+import {
   FARM_HERO_IMAGE,
   CROP_FIELD_IMAGE,
   HARVEST_IMAGE,
@@ -260,42 +266,47 @@ export const getNextScreen = async (
 async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
   const waId = decodeWaIdFromFlowToken(flowToken);
 
-  // Load configurable text
+  // Load all raw config values (may be locale-map objects or legacy plain strings)
   const [
-    welcomeTitle, welcomeBody, welcomeButton,
-    returningTitleTmpl, returningBodyTmpl, returningButton,
+    rawWelcomeTitle, rawWelcomeBody, rawWelcomeButton,
+    rawReturningTitle, rawReturningBody, rawReturningButton,
   ] = await Promise.all([
-    getConfigValue<string>('flow_welcome_title'),
-    getConfigValue<string>('flow_welcome_body'),
-    getConfigValue<string>('flow_welcome_button_label'),
-    getConfigValue<string>('flow_returning_title'),
-    getConfigValue<string>('flow_returning_body'),
-    getConfigValue<string>('flow_returning_button_label'),
+    getConfigValue<unknown>('flow_welcome_title'),
+    getConfigValue<unknown>('flow_welcome_body'),
+    getConfigValue<unknown>('flow_welcome_button_label'),
+    getConfigValue<unknown>('flow_returning_title'),
+    getConfigValue<unknown>('flow_returning_body'),
+    getConfigValue<unknown>('flow_returning_button_label'),
   ]);
 
   if (waId) {
     try {
       const existing = await getFarmerByWaId(waId);
       if (existing) {
-        logger.info('Flow INIT: returning farmer', waId, 'crop:', existing.crop);
+        const lang: Language = existing.language
+          ? validateLanguage(existing.language)
+          : DEFAULT_LANGUAGE;
+        logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, 'crop:', existing.crop);
         const cropName = cropLabel(existing.crop);
         const vars = { name: existing.farmer_name, crop: cropName };
         return {
           screen: 'WELCOME',
           data: {
             header_image_src: FARM_HERO_IMAGE,
-            welcome_title: applyTemplate(returningTitleTmpl ?? 'Welcome back, {name}! 🌾', vars),
-            welcome_body: applyTemplate(
-              returningBodyTmpl ?? "You're registered for {crop} advisory. You can update your details below.",
-              vars
+            welcome_title: applyTemplate(
+              getLocalizedString(rawReturningTitle, lang, 'flow_returning_title'), vars
             ),
-            button_label: returningButton ?? 'Update Details',
+            welcome_body: applyTemplate(
+              getLocalizedString(rawReturningBody, lang, 'flow_returning_body'), vars
+            ),
+            button_label: getLocalizedString(rawReturningButton, lang, 'flow_returning_button_label'),
             // Pre-fill data passed via navigate payload → FARMER_DETAILS Form init-values
             pf_farmer_name: existing.farmer_name || '',
             pf_age: parseInt(existing.age) || 0,
             pf_profession: existing.profession || '',
             pf_state: existing.state || '',
             pf_district: existing.district || '',
+            pf_language: lang,
           },
         };
       }
@@ -304,19 +315,22 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
     }
   }
 
+  // New farmer — use default language (English)
+  const lang = DEFAULT_LANGUAGE;
   return {
     screen: 'WELCOME',
     data: {
       header_image_src: FARM_HERO_IMAGE,
-      welcome_title: welcomeTitle ?? 'Welcome to Kweka Jeeto! 🌾',
-      welcome_body: welcomeBody ?? 'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
-      button_label: welcomeButton ?? 'Register Now',
+      welcome_title: getLocalizedString(rawWelcomeTitle, lang, 'flow_welcome_title'),
+      welcome_body: getLocalizedString(rawWelcomeBody, lang, 'flow_welcome_body'),
+      button_label: getLocalizedString(rawWelcomeButton, lang, 'flow_welcome_button_label'),
       // Empty prefill for new farmers (data schema requires all declared fields)
       pf_farmer_name: '',
       pf_age: 0,
       pf_profession: '',
       pf_state: '',
       pf_district: '',
+      pf_language: lang,
     },
   };
 }
@@ -356,8 +370,13 @@ async function handleFarmerDetails(
     }
   }
 
-  const cropSectionTmpl = (await getConfigValue<string>('flow_crop_section_title')) ?? 'Popular crops in {state}';
-  const cropSectionTitle = applyTemplate(cropSectionTmpl, { state: stateLabel });
+  const lang: Language = validateLanguage(String(data.language ?? 'en'));
+
+  const rawCropSectionTitle = await getConfigValue<unknown>('flow_crop_section_title');
+  const cropSectionTitle = applyTemplate(
+    getLocalizedString(rawCropSectionTitle, lang, 'flow_crop_section_title'),
+    { state: stateLabel }
+  );
 
   return {
     screen: 'CROP_SELECTION',
@@ -372,6 +391,7 @@ async function handleFarmerDetails(
       state: data.state,
       state_label: stateLabel,
       district: data.district,
+      language: lang,
       // Pre-fill existing crop and advisory date via CROP_SELECTION Form init-values
       pf_crop: pfCrop,
       pf_advisory_start_date: pfAdvisoryDate,
@@ -384,6 +404,7 @@ async function handleCropSelection(
   flowToken: string
 ): Promise<Record<string, unknown>> {
   const waId = decodeWaIdFromFlowToken(flowToken);
+  const lang: Language = validateLanguage(String(data.language ?? 'en'));
   const farmerName = String(data.farmer_name ?? 'Farmer');
   const cropId = String(data.crop ?? '');
   const cropName = cropLabel(cropId);
@@ -392,20 +413,20 @@ async function handleCropSelection(
   const dateStr = advisoryDate ? formatDate(advisoryDate) : 'soon';
   const templateVars = { name: farmerName, crop: cropName, date: dateStr };
 
-  const [successHeadingTmpl, successBodyTmpl, completionMsgTmpl] = await Promise.all([
-    getConfigValue<string>('flow_success_heading'),
-    getConfigValue<string>('flow_success_body'),
-    getConfigValue<string>('flow_completion_message'),
+  const [rawSuccessHeading, rawSuccessBody, rawCompletionMsg] = await Promise.all([
+    getConfigValue<unknown>('flow_success_heading'),
+    getConfigValue<unknown>('flow_success_body'),
+    getConfigValue<unknown>('flow_completion_message'),
   ]);
 
-  const successHeading = applyTemplate(successHeadingTmpl ?? "You're All Set, {name}! 🌾", templateVars);
+  const successHeading = applyTemplate(
+    getLocalizedString(rawSuccessHeading, lang, 'flow_success_heading'), templateVars
+  );
   const successBody = applyTemplate(
-    successBodyTmpl ?? 'Daily *{crop}* advisory will arrive every morning starting {date}. You\'ll get tips on watering, fertilizers, pest control & market prices tailored to your farm.',
-    templateVars
+    getLocalizedString(rawSuccessBody, lang, 'flow_success_body'), templateVars
   );
   const confirmMsg = applyTemplate(
-    completionMsgTmpl ?? "✅ Registration complete! Hello {name}, you'll receive daily *{crop}* advisory starting {date}. Check your WhatsApp every morning for personalized tips. Welcome to Kweka Jeeto! 🌾",
-    templateVars
+    getLocalizedString(rawCompletionMsg, lang, 'flow_completion_message'), templateVars
   );
 
   if (waId) {
@@ -420,6 +441,7 @@ async function handleCropSelection(
         crop: cropId,
         advisory_start_date: advisoryDate,
         flow_token: flowToken,
+        language: lang,
       });
       logger.info('Flow CROP_SELECTION: farmer saved', waId, cropId);
 
