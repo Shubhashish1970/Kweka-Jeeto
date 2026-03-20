@@ -4,62 +4,274 @@ import GlobalMessageBar from '../components/shared/GlobalMessageBar';
 import Button from '../components/shared/Button';
 import { PAGE_INFO_BANNERS } from '../constants/pageInfoBanners';
 
-// Defaults when nothing is saved in DB (match backend defaults in message.service / flow-response)
+// ---------------------------------------------------------------------------
+// Defaults (match backend fallbacks)
+// ---------------------------------------------------------------------------
 const DEFAULT_CONFIG: Record<string, string> = {
+  // Chat invite message
   flow_cta: 'Register',
   flow_header: 'कृषि सलाह / Agri Advisory',
   flow_body: 'Register to get crop advisory.',
-  flow_completion_message: "Thank you! We've received your details.",
+  // Welcome — new farmer
+  flow_welcome_title: 'Welcome to Kweka Jeeto! 🌾',
+  flow_welcome_body: 'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
+  flow_welcome_button_label: 'Register Now',
+  // Welcome — returning farmer
+  flow_returning_title: 'Welcome back, {name}! 🌾',
+  flow_returning_body: "You're registered for {crop} advisory. You can update your details below.",
+  flow_returning_button_label: 'Update Details',
+  // Crop selection
+  flow_crop_section_title: 'Popular crops in {state}',
+  // Success screen
+  flow_success_heading: "You're All Set, {name}! 🌾",
+  flow_success_body: "Daily *{crop}* advisory will arrive every morning starting {date}. You'll get tips on watering, fertilizers, pest control & market prices tailored to your farm.",
+  // Post-submit WhatsApp message
+  flow_completion_message: "✅ Registration complete! Hello {name}, you'll receive daily *{crop}* advisory starting {date}. Check your WhatsApp every morning for personalized tips. Welcome to Kweka Jeeto! 🌾",
+  // WhatsApp
   whatsapp_phone_number_id: '',
 };
 
-/** Meta/WhatsApp limits for Config fields — used for maxLength and character counters. */
-const CONFIG_LIMITS: Record<string, number> = {
-  flow_cta: 20,
-  flow_header: 60,
-  flow_body: 1024,
-  flow_completion_message: 500,
-};
+// All editable config keys (for API loading)
+const ALL_CONFIG_KEYS = Object.keys(DEFAULT_CONFIG);
 
-const CONFIG_KEYS: Array<{ key: string; label: string; type: string; hint: string; maxLength?: number }> = [
+// ---------------------------------------------------------------------------
+// Section definitions
+// ---------------------------------------------------------------------------
+interface FieldDef {
+  key: string;
+  label: string;
+  type: 'text' | 'textarea';
+  hint: string;
+  maxLength?: number;
+  placeholders?: string[];
+}
+
+interface LockedItemDef {
+  label: string;
+  reason: string;
+}
+
+interface SectionDef {
+  title: string;
+  fields: FieldDef[];
+  lockedItems?: LockedItemDef[];
+  note?: string;
+}
+
+const SECTIONS: SectionDef[] = [
   {
-    key: 'flow_cta',
-    label: 'Flow CTA Button Text',
-    type: 'text',
-    hint: 'Text on the button that opens the registration flow in WhatsApp (e.g. “Register” or “किसान पंजीकरण”).',
-    maxLength: CONFIG_LIMITS.flow_cta,
+    title: 'Chat Invite Message',
+    fields: [
+      {
+        key: 'flow_cta',
+        label: 'CTA Button Text',
+        type: 'text',
+        hint: 'Button label in the WhatsApp chat that opens the flow.',
+        maxLength: 20,
+      },
+      {
+        key: 'flow_header',
+        label: 'Message Header',
+        type: 'text',
+        hint: 'Bold title shown in the chat invite card.',
+        maxLength: 60,
+      },
+      {
+        key: 'flow_body',
+        label: 'Message Body',
+        type: 'textarea',
+        hint: 'Short description in the chat invite card.',
+        maxLength: 1024,
+      },
+    ],
   },
   {
-    key: 'flow_header',
-    label: 'Flow Header',
-    type: 'text',
-    hint: 'Title shown at the top of the flow when the user opens it in WhatsApp.',
-    maxLength: CONFIG_LIMITS.flow_header,
+    title: 'Welcome Screen — New Farmer',
+    fields: [
+      {
+        key: 'flow_welcome_title',
+        label: 'Title',
+        type: 'text',
+        hint: 'Heading shown at the top of the WELCOME screen for first-time users.',
+        maxLength: 80,
+      },
+      {
+        key: 'flow_welcome_body',
+        label: 'Body',
+        type: 'textarea',
+        hint: 'Introductory paragraph below the title.',
+        maxLength: 500,
+      },
+      {
+        key: 'flow_welcome_button_label',
+        label: 'Button Label',
+        type: 'text',
+        hint: 'Text on the action button at the bottom.',
+        maxLength: 20,
+      },
+    ],
+    lockedItems: [
+      {
+        label: 'Hero image',
+        reason: 'Stored as base64 in code (src/assets/images.ts). Changing it requires a code update and redeploy.',
+      },
+      {
+        label: 'Feature tiles (Crop advisory / Weather & tips / Watch intro)',
+        reason: 'Fixed components in the WhatsApp Flow JSON. Requires a Meta flow re-upload to change.',
+      },
+    ],
   },
   {
-    key: 'flow_body',
-    label: 'Flow Body Text',
-    type: 'text',
-    hint: 'Short description shown in the flow invite message (e.g. “Register to get crop advisory.”).',
-    maxLength: CONFIG_LIMITS.flow_body,
+    title: 'Welcome Screen — Returning Farmer',
+    fields: [
+      {
+        key: 'flow_returning_title',
+        label: 'Title template',
+        type: 'text',
+        hint: 'Heading for users who are already registered.',
+        maxLength: 80,
+        placeholders: ['{name}', '{crop}'],
+      },
+      {
+        key: 'flow_returning_body',
+        label: 'Body template',
+        type: 'textarea',
+        hint: 'Paragraph shown below the returning-farmer title.',
+        maxLength: 500,
+        placeholders: ['{name}', '{crop}'],
+      },
+      {
+        key: 'flow_returning_button_label',
+        label: 'Button Label',
+        type: 'text',
+        hint: 'Text on the action button for returning farmers.',
+        maxLength: 20,
+      },
+    ],
   },
   {
-    key: 'flow_completion_message',
-    label: 'Flow Completion Message',
-    type: 'text',
-    hint: 'Message sent to the user after they successfully submit the flow (e.g. “Thank you, we’ll be in touch.”).',
-    maxLength: CONFIG_LIMITS.flow_completion_message,
+    title: 'Crop Selection Screen',
+    fields: [
+      {
+        key: 'flow_crop_section_title',
+        label: 'Section title',
+        type: 'text',
+        hint: 'Heading above the crop list.',
+        maxLength: 80,
+        placeholders: ['{state}'],
+      },
+    ],
+    lockedItems: [
+      {
+        label: 'Crop options per state',
+        reason: 'Managed per-state in the Crop Config page.',
+      },
+      {
+        label: 'Form field layout (name, age, profession, state, district)',
+        reason: 'Field structure is defined in the WhatsApp Flow JSON. Requires a Meta flow re-upload to change.',
+      },
+    ],
   },
   {
-    key: 'whatsapp_phone_number_id',
-    label: 'WhatsApp Phone Number ID',
-    type: 'text',
-    hint: 'Meta’s ID for your WhatsApp Business phone number; leave blank to use the value from GitHub/env.',
+    title: 'Success Screen',
+    fields: [
+      {
+        key: 'flow_success_heading',
+        label: 'Heading template',
+        type: 'text',
+        hint: 'Large heading shown after successful registration.',
+        maxLength: 80,
+        placeholders: ['{name}', '{crop}', '{date}'],
+      },
+      {
+        key: 'flow_success_body',
+        label: 'Body template',
+        type: 'textarea',
+        hint: 'Paragraph below the success heading.',
+        maxLength: 500,
+        placeholders: ['{name}', '{crop}', '{date}'],
+      },
+    ],
+    lockedItems: [
+      {
+        label: 'Success image',
+        reason: 'Stored as base64 in code (src/assets/images.ts). Changing it requires a code update and redeploy.',
+      },
+    ],
+  },
+  {
+    title: 'Post-Submit WhatsApp Message',
+    fields: [
+      {
+        key: 'flow_completion_message',
+        label: 'Text template',
+        type: 'textarea',
+        hint: 'WhatsApp text message sent automatically after the farmer submits the flow.',
+        maxLength: 500,
+        placeholders: ['{name}', '{crop}', '{date}'],
+      },
+    ],
+  },
+  {
+    title: 'WhatsApp Settings',
+    fields: [
+      {
+        key: 'whatsapp_phone_number_id',
+        label: 'Phone Number ID',
+        type: 'text',
+        hint: "Meta's ID for your WhatsApp Business phone number. Leave blank to use the environment variable.",
+      },
+    ],
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Locked field component
+// ---------------------------------------------------------------------------
+function LockedField({ label, reason }: { label: string; reason: string }) {
+  return (
+    <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg border border-dashed border-slate-300 bg-slate-50 mb-3">
+      <span className="text-slate-400 mt-0.5 shrink-0" aria-hidden>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" />
+        </svg>
+      </span>
+      <div>
+        <p className="text-xs font-semibold text-slate-600">{label}</p>
+        <p className="text-xs text-slate-500 italic mt-0.5">{reason}</p>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Placeholder badge
+// ---------------------------------------------------------------------------
+function PlaceholderBadge({ vars }: { vars: string[] }) {
+  return (
+    <span className="text-xs text-slate-500">
+      Placeholders:{' '}
+      {vars.map((v) => (
+        <code key={v} className="bg-slate-100 rounded px-1 py-0.5 mr-1 text-slate-600">{v}</code>
+      ))}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Preview helpers
+// ---------------------------------------------------------------------------
+function applyPreview(tmpl: string, vars: Record<string, string>): string {
+  return Object.entries(vars).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), tmpl);
+}
+
+const PREVIEW_VARS = { name: 'Ravi', crop: 'Cotton', state: 'Maharashtra', date: '21 March 2026' };
+
 type PreviewMode = 'chat' | 'flow';
 
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 export default function Config() {
   const [config, setConfig] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -73,10 +285,10 @@ export default function Config() {
       .get<Record<string, unknown>>('/config')
       .then((r) => {
         const out: Record<string, string> = {};
-        for (const k of CONFIG_KEYS) {
-          const v = r[k.key];
+        for (const k of ALL_CONFIG_KEYS) {
+          const v = r[k];
           const raw = v != null ? String(v).trim() : '';
-          out[k.key] = raw !== '' ? raw : (DEFAULT_CONFIG[k.key] ?? '');
+          out[k] = raw !== '' ? raw : (DEFAULT_CONFIG[k] ?? '');
         }
         setConfig(out);
       })
@@ -96,10 +308,19 @@ export default function Config() {
     }
   };
 
-  const previewHeader = config.flow_header?.trim() || 'कृषि सलाह / Agri Advisory';
-  const previewBody = config.flow_body?.trim() || 'Register to get crop advisory.';
-  const previewCta = config.flow_cta?.trim() || 'Register';
-  const previewCompletion = config.flow_completion_message?.trim() || "Thank you! We've received your details.";
+  const val = (key: string) => config[key] ?? DEFAULT_CONFIG[key] ?? '';
+
+  // Preview computed values
+  const previewHeader = val('flow_header') || 'कृषि सलाह / Agri Advisory';
+  const previewBody = val('flow_body') || 'Register to get crop advisory.';
+  const previewCta = val('flow_cta') || 'Register';
+  const previewCompletion = applyPreview(val('flow_completion_message') || DEFAULT_CONFIG.flow_completion_message, PREVIEW_VARS);
+  const previewWelcomeTitle = val('flow_welcome_title') || DEFAULT_CONFIG.flow_welcome_title;
+  const previewWelcomeBody = val('flow_welcome_body') || DEFAULT_CONFIG.flow_welcome_body;
+  const previewWelcomeButton = val('flow_welcome_button_label') || DEFAULT_CONFIG.flow_welcome_button_label;
+  const previewCropTitle = applyPreview(val('flow_crop_section_title') || DEFAULT_CONFIG.flow_crop_section_title, PREVIEW_VARS);
+  const previewSuccessHeading = applyPreview(val('flow_success_heading') || DEFAULT_CONFIG.flow_success_heading, PREVIEW_VARS);
+  const previewSuccessBody = applyPreview(val('flow_success_body') || DEFAULT_CONFIG.flow_success_body, PREVIEW_VARS);
 
   if (loading) return <p className="text-slate-600">Loading...</p>;
 
@@ -110,48 +331,76 @@ export default function Config() {
       <GlobalMessageBar title={banner.title} description={banner.description} className="mb-4" />
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Configuration</h1>
       <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-        Configure WhatsApp and Flow settings. Saved in the database and loaded automatically; change values and click Save to update.
+        Configure WhatsApp and Flow screen text. Saved in the database and loaded automatically.
       </p>
       <div className="flex flex-wrap gap-8 items-start">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-[480px] min-w-[280px] flex-1">
-          {CONFIG_KEYS.map(({ key, label, hint, maxLength }) => {
-            const value = config[key] ?? '';
-            const len = value.length;
-            const atLimit = maxLength != null && len >= maxLength;
-            return (
-              <div key={key} className="mb-4">
-                <div className="flex items-baseline justify-between gap-2 mb-1">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">{label}</label>
-                  {maxLength != null && (
-                    <span className={`text-xs tabular-nums shrink-0 ${atLimit ? 'text-amber-600 font-medium' : 'text-slate-400'}`}>
-                      {len}/{maxLength}
-                    </span>
-                  )}
-                </div>
-                {hint && <p className="text-sm text-slate-600 mb-1.5">{hint}</p>}
-                <input
-                  value={value}
-                  onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
-                  maxLength={maxLength}
-                  className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  aria-describedby={maxLength != null ? `${key}-limit` : undefined}
-                />
-                {maxLength != null && (
-                  <p id={`${key}-limit`} className="mt-1 text-xs text-slate-500">
-                    Max {maxLength} characters{key === 'flow_header' ? ' (Meta limit for flow header)' : ''}.
-                  </p>
-                )}
-              </div>
-            );
-          })}
+        {/* ── Left: Sectioned form ── */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-[520px] min-w-[300px] flex-1">
+          {SECTIONS.map((section) => (
+            <div key={section.title} className="mb-6">
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">
+                {section.title}
+              </h2>
+              {section.note && (
+                <p className="text-xs text-slate-500 italic mb-3">{section.note}</p>
+              )}
+              {section.fields.map(({ key, label, type, hint, maxLength, placeholders }) => {
+                const value = config[key] ?? '';
+                const len = value.length;
+                const atLimit = maxLength != null && len >= maxLength;
+                return (
+                  <div key={key} className="mb-4">
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                        {label}
+                      </label>
+                      {maxLength != null && (
+                        <span className={`text-xs tabular-nums shrink-0 ${atLimit ? 'text-amber-600 font-medium' : 'text-slate-400'}`}>
+                          {len}/{maxLength}
+                        </span>
+                      )}
+                    </div>
+                    {hint && <p className="text-sm text-slate-600 mb-1.5">{hint}</p>}
+                    {placeholders && <div className="mb-1.5"><PlaceholderBadge vars={placeholders} /></div>}
+                    {type === 'textarea' ? (
+                      <textarea
+                        value={value}
+                        onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
+                        maxLength={maxLength}
+                        rows={3}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary resize-y"
+                      />
+                    ) : (
+                      <input
+                        value={value}
+                        onChange={(e) => setConfig((c) => ({ ...c, [key]: e.target.value }))}
+                        maxLength={maxLength}
+                        className="w-full min-h-10 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    )}
+                    {maxLength != null && (
+                      <p className="mt-1 text-xs text-slate-400">Max {maxLength} characters.</p>
+                    )}
+                  </div>
+                );
+              })}
+              {section.lockedItems?.map((item) => (
+                <LockedField key={item.label} label={item.label} reason={item.reason} />
+              ))}
+            </div>
+          ))}
+
           {message && (
-            <p className={`mb-4 text-sm ${message.includes('Failed') ? 'text-red-500' : 'text-green-600'}`}>{message}</p>
+            <p className={`mb-4 text-sm ${message.includes('Failed') ? 'text-red-500' : 'text-green-600'}`}>
+              {message}
+            </p>
           )}
           <Button type="button" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
 
+        {/* ── Right: Live preview ── */}
         <div className="flex-1 min-w-[280px] flex flex-col items-center sticky top-6">
           <div className="flex items-center justify-center gap-2 mb-2 w-full">
             <button
@@ -169,7 +418,8 @@ export default function Config() {
               Flow screens
             </button>
           </div>
-          {/* iPhone-style wireframe — same size for Chat invite and Flow screens */}
+
+          {/* iPhone wireframe */}
           <div
             style={{
               width: 319,
@@ -191,23 +441,23 @@ export default function Config() {
               </div>
 
               {previewMode === 'chat' ? (
-                <div style={{ padding: '12px 10px 12px 10px', background: '#e5e5e5', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 0 }}>
+                <div style={{ padding: '12px 10px', background: '#e5e5e5', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 0 }}>
                   <div>
-                    <div style={{ marginLeft: 0, marginRight: '4%', width: '96%', background: '#fff', borderRadius: '12px 12px 12px 4px', padding: '8px 12px 10px 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.08)' }}>
+                    <div style={{ marginRight: '4%', width: '96%', background: '#fff', borderRadius: '12px 12px 12px 4px', padding: '8px 12px 10px', boxShadow: '0 1px 2px rgba(0,0,0,0.08)' }}>
                       <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6, color: '#111', lineHeight: 1.35 }}>{previewHeader}</div>
                       <div style={{ fontSize: 14, color: '#374151', marginBottom: 10, lineHeight: 1.4 }}>{previewBody}</div>
                       <div style={{ display: 'inline-block', padding: '8px 16px', background: '#25D366', color: '#fff', borderRadius: 8, fontSize: 14, fontWeight: 500 }}>{previewCta}</div>
                     </div>
                     <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>Tap button to open flow</div>
                   </div>
-                  <div style={{ marginLeft: 0, marginRight: '4%', width: '96%', background: '#fff', borderRadius: '12px 12px 12px 4px', padding: '8px 12px 10px 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.08)', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
+                  <div style={{ marginRight: '4%', width: '96%', background: '#fff', borderRadius: '12px 12px 12px 4px', padding: '8px 12px 10px', boxShadow: '0 1px 2px rgba(0,0,0,0.08)', fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
                     <span style={{ color: '#6b7280' }}>After submit: </span>{previewCompletion}
                   </div>
                 </div>
               ) : (
                 <>
-                  {/* Flow screens: Personalised-Offer style */}
                   <div style={{ flex: 1, overflow: 'auto', padding: 16, minHeight: 0, background: '#fff' }}>
+                    {/* Step 0: WELCOME */}
                     {flowStep === 0 && (
                       <div className="space-y-4">
                         <div className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/10] bg-slate-100">
@@ -217,40 +467,34 @@ export default function Config() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>{previewHeader}</h2>
-                        <p className="text-sm text-slate-600 leading-relaxed">{previewBody}</p>
+                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>{previewWelcomeTitle}</h2>
+                        <p className="text-sm text-slate-600 leading-relaxed">{previewWelcomeBody}</p>
                         <div className="space-y-3">
-                          <div className="rounded-xl border-2 border-slate-200 overflow-hidden flex gap-0 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer bg-white">
-                            <div className="w-20 h-20 shrink-0 bg-slate-100">
-                              <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=160&q=80" alt="Crop" className="w-full h-full object-cover" />
+                          {[
+                            { title: 'Crop advisory', sub: 'Get personalised crop tips', img: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=160&q=80' },
+                            { title: 'Weather & tips', sub: 'Local weather and alerts', img: 'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=160&q=80' },
+                          ].map((tile) => (
+                            <div key={tile.title} className="rounded-xl border-2 border-slate-200 overflow-hidden flex bg-white">
+                              <div className="w-20 h-20 shrink-0 bg-slate-100">
+                                <img src={tile.img} alt={tile.title} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="p-3 flex flex-col justify-center min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm">{tile.title}</p>
+                                <p className="text-xs text-slate-500">{tile.sub}</p>
+                              </div>
                             </div>
-                            <div className="p-3 flex flex-col justify-center min-w-0">
-                              <p className="font-semibold text-slate-900 text-sm">Crop advisory</p>
-                              <p className="text-xs text-slate-500">Get personalised crop tips</p>
-                            </div>
-                          </div>
-                          <div className="rounded-xl border-2 border-slate-200 overflow-hidden flex gap-0 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer bg-white">
-                            <div className="w-20 h-20 shrink-0 bg-slate-100">
-                              <img src="https://images.unsplash.com/photo-1504386106331-3e4e71712b38?w=160&q=80" alt="Weather" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="p-3 flex flex-col justify-center min-w-0">
-                              <p className="font-semibold text-slate-900 text-sm">Weather & tips</p>
-                              <p className="text-xs text-slate-500">Local weather and alerts</p>
-                            </div>
-                          </div>
-                          <div className="rounded-xl border-2 border-slate-200 overflow-hidden flex gap-0 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer bg-white">
-                            <div className="w-20 h-20 shrink-0 bg-slate-800 flex items-center justify-center relative">
-                              <img src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=160&q=80" alt="Video" className="w-full h-full object-cover opacity-80" />
-                              <span className="absolute inset-0 flex items-center justify-center text-white text-2xl drop-shadow">▶</span>
-                            </div>
-                            <div className="p-3 flex flex-col justify-center min-w-0">
-                              <p className="font-semibold text-slate-900 text-sm">Watch intro</p>
-                              <p className="text-xs text-slate-500">See how it works (video)</p>
-                            </div>
+                          ))}
+                          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2">
+                            <span className="text-slate-400 text-xs">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" /></svg>
+                            </span>
+                            <p className="text-xs text-slate-500 italic">Feature tiles are fixed in the Flow JSON</p>
                           </div>
                         </div>
                       </div>
                     )}
+
+                    {/* Step 1: FARMER_DETAILS */}
                     {flowStep === 1 && (
                       <div className="space-y-4">
                         <div className="rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-100">
@@ -260,41 +504,71 @@ export default function Config() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>Your details</h2>
-                        <p className="text-sm text-slate-600 leading-relaxed">Share your details to get personalised advice.</p>
+                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 18 }}>Your details</h2>
+                        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2 mb-2">
+                          <span className="text-slate-400 text-xs shrink-0">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" /></svg>
+                          </span>
+                          <p className="text-xs text-slate-500 italic">Form field labels &amp; layout are fixed in the WhatsApp Flow JSON</p>
+                        </div>
                         <div className="space-y-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Name</label>
-                            <div className="min-h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 flex items-center text-sm text-slate-500">e.g. Farmer name</div>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">State</label>
-                            <div className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 flex items-center text-sm text-slate-400">Select state</div>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Crop</label>
-                            <div className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 flex items-center text-sm text-slate-400">Select crop</div>
-                          </div>
+                          {['Name', 'Age', 'Profession', 'State', 'District'].map((f) => (
+                            <div key={f}>
+                              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">{f}</label>
+                              <div className="min-h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 flex items-center text-sm text-slate-400">—</div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
+
+                    {/* Step 2: CROP_SELECTION */}
                     {flowStep === 2 && (
-                      <div className="flex flex-col items-center justify-center py-6 text-center">
-                        <div className="rounded-xl overflow-hidden border border-slate-200 w-full max-w-[200px] aspect-square mb-4 bg-primary/10">
+                      <div className="space-y-4">
+                        <div className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/9] bg-slate-100">
+                          <img
+                            src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&q=80"
+                            alt="Crops"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 16 }}>{previewCropTitle}</h2>
+                        <div className="space-y-2">
+                          {['Cotton', 'Paddy (Rice)', 'Wheat', 'Maize', 'Chilli'].map((crop) => (
+                            <div key={crop} className="rounded-lg border border-slate-200 px-3 py-2 flex items-center gap-2 bg-white">
+                              <div className="w-2 h-2 rounded-full border-2 border-slate-300 shrink-0" />
+                              <p className="text-sm text-slate-700">{crop}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 flex items-center gap-2">
+                          <span className="text-slate-400 text-xs shrink-0">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4 0V5a1 1 0 1 1 2 0v2H7z" /></svg>
+                          </span>
+                          <p className="text-xs text-slate-500 italic">Crop options managed in Crop Config page</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3: SUCCESS */}
+                    {flowStep === 3 && (
+                      <div className="flex flex-col items-center py-4 text-center space-y-4">
+                        <div className="rounded-xl overflow-hidden border border-slate-200 w-full max-w-[180px] aspect-square bg-primary/10">
                           <img
                             src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=300&q=80"
                             alt="Success"
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-xl text-primary font-bold mb-2">✓</div>
-                        <h2 className="text-lg font-bold text-slate-900 mb-2">Thank you!</h2>
-                        <p className="text-sm text-slate-600 leading-relaxed max-w-[220px]">{previewCompletion}</p>
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-lg text-primary font-bold">✓</div>
+                        <h2 className="font-bold text-slate-900 leading-tight" style={{ fontSize: 17 }}>{previewSuccessHeading}</h2>
+                        <p className="text-sm text-slate-600 leading-relaxed max-w-[220px]">{previewSuccessBody}</p>
                       </div>
                     )}
                   </div>
-                  {/* Flow footer CTA (step 0 and 1) */}
-                  {(flowStep === 0 || flowStep === 1) && (
+
+                  {/* Footer CTA */}
+                  {flowStep < 3 && (
                     <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', background: '#fff', flexShrink: 0 }}>
                       <button
                         type="button"
@@ -302,7 +576,7 @@ export default function Config() {
                         className="w-full min-h-10 rounded-xl text-white font-bold text-sm flex items-center justify-center"
                         style={{ background: '#25D366' }}
                       >
-                        {flowStep === 0 ? previewCta : 'Submit'}
+                        {flowStep === 0 ? previewWelcomeButton : flowStep === 2 ? 'Submit' : 'Next'}
                       </button>
                     </div>
                   )}
@@ -310,14 +584,24 @@ export default function Config() {
               )}
             </div>
           </div>
+
           {previewMode === 'flow' && (
             <div className="flex items-center justify-center gap-2 mt-3">
-              <button type="button" onClick={() => setFlowStep(0)} className={`w-2 h-2 rounded-full ${flowStep === 0 ? 'bg-primary' : 'bg-slate-300'}`} aria-label="Step 1" />
-              <button type="button" onClick={() => setFlowStep(1)} className={`w-2 h-2 rounded-full ${flowStep === 1 ? 'bg-primary' : 'bg-slate-300'}`} aria-label="Step 2" />
-              <button type="button" onClick={() => setFlowStep(2)} className={`w-2 h-2 rounded-full ${flowStep === 2 ? 'bg-primary' : 'bg-slate-300'}`} aria-label="Step 3" />
+              {['WELCOME', 'DETAILS', 'CROPS', 'SUCCESS'].map((label, i) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setFlowStep(i)}
+                  title={label}
+                  className={`w-2 h-2 rounded-full transition-colors ${flowStep === i ? 'bg-primary' : 'bg-slate-300'}`}
+                  aria-label={label}
+                />
+              ))}
             </div>
           )}
-          <p className="text-xs text-slate-500 mt-2 text-center">Phone Number ID and Flow ID are not shown to users.</p>
+          <p className="text-xs text-slate-400 mt-2 text-center">
+            Preview uses sample values: name=Ravi, crop=Cotton
+          </p>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@
  */
 import { getFarmerByWaId, upsertFarmer } from '../data/repositories/farmer.repository';
 import { getStateCrop } from '../data/repositories/stateCrop.repository';
+import { getConfigValue } from '../data/repositories/config.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
 import {
@@ -201,6 +202,14 @@ function parseAdvisoryDate(value: unknown): Date | undefined {
 }
 
 // ---------------------------------------------------------------------------
+// Template helper — replaces {name}, {crop}, {state}, {date} placeholders
+// ---------------------------------------------------------------------------
+
+function applyTemplate(tmpl: string, vars: Record<string, string>): string {
+  return Object.entries(vars).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), tmpl);
+}
+
+// ---------------------------------------------------------------------------
 // Main routing — matches Meta's getNextScreen pattern
 // ---------------------------------------------------------------------------
 
@@ -251,18 +260,36 @@ export const getNextScreen = async (
 async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
   const waId = decodeWaIdFromFlowToken(flowToken);
 
+  // Load configurable text
+  const [
+    welcomeTitle, welcomeBody, welcomeButton,
+    returningTitleTmpl, returningBodyTmpl, returningButton,
+  ] = await Promise.all([
+    getConfigValue<string>('flow_welcome_title'),
+    getConfigValue<string>('flow_welcome_body'),
+    getConfigValue<string>('flow_welcome_button_label'),
+    getConfigValue<string>('flow_returning_title'),
+    getConfigValue<string>('flow_returning_body'),
+    getConfigValue<string>('flow_returning_button_label'),
+  ]);
+
   if (waId) {
     try {
       const existing = await getFarmerByWaId(waId);
       if (existing) {
         logger.info('Flow INIT: returning farmer', waId, 'crop:', existing.crop);
+        const cropName = cropLabel(existing.crop);
+        const vars = { name: existing.farmer_name, crop: cropName };
         return {
           screen: 'WELCOME',
           data: {
             header_image_src: FARM_HERO_IMAGE,
-            welcome_title: `Welcome back, ${existing.farmer_name}! 🌾`,
-            welcome_body: `You're registered for ${cropLabel(existing.crop)} advisory. You can update your details below.`,
-            button_label: 'Update Details',
+            welcome_title: applyTemplate(returningTitleTmpl ?? 'Welcome back, {name}! 🌾', vars),
+            welcome_body: applyTemplate(
+              returningBodyTmpl ?? "You're registered for {crop} advisory. You can update your details below.",
+              vars
+            ),
+            button_label: returningButton ?? 'Update Details',
             // Pre-fill data passed via navigate payload → FARMER_DETAILS Form init-values
             pf_farmer_name: existing.farmer_name || '',
             pf_age: parseInt(existing.age) || 0,
@@ -281,9 +308,9 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
     screen: 'WELCOME',
     data: {
       header_image_src: FARM_HERO_IMAGE,
-      welcome_title: 'Welcome to Kweka Jeeto! 🌾',
-      welcome_body: 'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
-      button_label: 'Register Now',
+      welcome_title: welcomeTitle ?? 'Welcome to Kweka Jeeto! 🌾',
+      welcome_body: welcomeBody ?? 'Get personalized daily crop advisory on WhatsApp — powered by local farming expertise. Register in under a minute.',
+      button_label: welcomeButton ?? 'Register Now',
       // Empty prefill for new farmers (data schema requires all declared fields)
       pf_farmer_name: '',
       pf_age: 0,
@@ -329,11 +356,14 @@ async function handleFarmerDetails(
     }
   }
 
+  const cropSectionTmpl = (await getConfigValue<string>('flow_crop_section_title')) ?? 'Popular crops in {state}';
+  const cropSectionTitle = applyTemplate(cropSectionTmpl, { state: stateLabel });
+
   return {
     screen: 'CROP_SELECTION',
     data: {
       header_image_src: CROP_FIELD_IMAGE,
-      crop_section_title: `Popular crops in ${stateLabel}`,
+      crop_section_title: cropSectionTitle,
       crop_options: cropOptionsForFlow,
       // Pass farmer details through to CROP_SELECTION so they're in the final payload
       farmer_name: data.farmer_name,
@@ -359,6 +389,25 @@ async function handleCropSelection(
   const cropName = cropLabel(cropId);
   const advisoryDate = parseAdvisoryDate(data.advisory_start_date);
 
+  const dateStr = advisoryDate ? formatDate(advisoryDate) : 'soon';
+  const templateVars = { name: farmerName, crop: cropName, date: dateStr };
+
+  const [successHeadingTmpl, successBodyTmpl, completionMsgTmpl] = await Promise.all([
+    getConfigValue<string>('flow_success_heading'),
+    getConfigValue<string>('flow_success_body'),
+    getConfigValue<string>('flow_completion_message'),
+  ]);
+
+  const successHeading = applyTemplate(successHeadingTmpl ?? "You're All Set, {name}! 🌾", templateVars);
+  const successBody = applyTemplate(
+    successBodyTmpl ?? 'Daily *{crop}* advisory will arrive every morning starting {date}. You\'ll get tips on watering, fertilizers, pest control & market prices tailored to your farm.',
+    templateVars
+  );
+  const confirmMsg = applyTemplate(
+    completionMsgTmpl ?? "✅ Registration complete! Hello {name}, you'll receive daily *{crop}* advisory starting {date}. Check your WhatsApp every morning for personalized tips. Welcome to Kweka Jeeto! 🌾",
+    templateVars
+  );
+
   if (waId) {
     try {
       await upsertFarmer({
@@ -374,10 +423,6 @@ async function handleCropSelection(
       });
       logger.info('Flow CROP_SELECTION: farmer saved', waId, cropId);
 
-      const dateStr = advisoryDate ? formatDate(advisoryDate) : 'soon';
-      const confirmMsg =
-        `✅ Registration complete! Hello ${farmerName}, you'll receive daily *${cropName}* advisory starting ${dateStr}. ` +
-        `Check your WhatsApp every morning for personalized tips. Welcome to Kweka Jeeto! 🌾`;
       sendTextMessage(waId, confirmMsg).catch((err) =>
         logger.error('Flow: confirmation text failed:', err)
       );
@@ -386,15 +431,12 @@ async function handleCropSelection(
     }
   }
 
-  const dateStr = advisoryDate ? formatDate(advisoryDate) : 'soon';
   return {
     screen: 'SUCCESS',
     data: {
       success_image_src: HARVEST_IMAGE,
-      confirmation_heading: `You're All Set, ${farmerName}! 🌾`,
-      confirmation_body:
-        `Daily *${cropName}* advisory will arrive every morning starting ${dateStr}. ` +
-        `You'll get tips on watering, fertilizers, pest control & market prices tailored to your farm.`,
+      confirmation_heading: successHeading,
+      confirmation_body: successBody,
       extension_message_response: {
         params: { flow_token: flowToken },
       },
