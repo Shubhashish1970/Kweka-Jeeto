@@ -88,8 +88,6 @@ export const sendFlowMessage = async (to: string): Promise<boolean> => {
             flow_id: flowId,
             flow_cta: flowCta,
             flow_action: 'data_exchange',
-            // Required by Meta when the flow is in DRAFT state
-            ...(env.whatsapp.flowMode === 'draft' ? { mode: 'draft' } : {}),
           },
         },
       },
