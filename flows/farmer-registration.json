@@ -56,6 +56,26 @@
         "pf_language": {
           "type": "string",
           "__example__": "en"
+        },
+        "pf_district_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "guntur",
+              "title": "Guntur"
+            }
+          ]
         }
       },
       "layout": {
@@ -95,7 +115,8 @@
                 "pf_profession": "${data.pf_profession}",
                 "pf_state": "${data.pf_state}",
                 "pf_district": "${data.pf_district}",
-                "pf_language": "${data.pf_language}"
+                "pf_language": "${data.pf_language}",
+                "district_options": "${data.pf_district_options}"
               }
             }
           }
@@ -129,6 +150,26 @@
         "pf_language": {
           "type": "string",
           "__example__": "en"
+        },
+        "district_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "guntur",
+              "title": "Guntur"
+            }
+          ]
         }
       },
       "layout": {
@@ -243,15 +284,21 @@
                     "id": "other",
                     "title": "Other"
                   }
-                ]
+                ],
+                "on-select-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "action_type": "state_change",
+                    "state": "${form.state}"
+                  }
+                }
               },
               {
-                "type": "TextInput",
+                "type": "Dropdown",
                 "name": "district",
-                "label": "District / Village",
+                "label": "District",
                 "required": true,
-                "input-type": "text",
-                "helper-text": "Helps us localize your advisory"
+                "data-source": "${data.district_options}"
               },
               {
                 "type": "Dropdown",

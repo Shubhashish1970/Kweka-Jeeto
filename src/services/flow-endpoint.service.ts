@@ -5,6 +5,7 @@
  */
 import { getFarmerByWaId, upsertFarmer } from '../data/repositories/farmer.repository';
 import { getStateCrop } from '../data/repositories/stateCrop.repository';
+import { getDistrictsByState } from '../data/repositories/stateMaster.repository';
 import { getConfigValue } from '../data/repositories/config.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
@@ -246,6 +247,10 @@ export const getNextScreen = async (
   if (action === 'data_exchange') {
     switch (screen) {
       case 'FARMER_DETAILS':
+        // Differentiate state-change (on-select-action) from form submit (Continue)
+        if (String(data.action_type ?? '') === 'state_change') {
+          return handleStateChange(data);
+        }
         return handleFarmerDetails(data, flowToken);
       case 'CROP_SELECTION':
         return handleCropSelection(data, flowToken);
@@ -289,6 +294,16 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
         logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, 'crop:', existing.crop);
         const cropName = cropLabel(existing.crop);
         const vars = { name: existing.farmer_name, crop: cropName };
+        // Pre-load district options for returning farmer's saved state
+        let pfDistrictOptions: { id: string; title: string }[] = [];
+        if (existing.state) {
+          try {
+            const districts = await getDistrictsByState(existing.state);
+            pfDistrictOptions = districts.map((d) => ({ id: d, title: d }));
+          } catch (err) {
+            logger.warn('Flow INIT: could not load districts for state:', existing.state, err);
+          }
+        }
         return {
           screen: 'WELCOME',
           data: {
@@ -306,6 +321,7 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
             pf_profession: existing.profession || '',
             pf_state: existing.state || '',
             pf_district: existing.district || '',
+            pf_district_options: pfDistrictOptions,
             pf_language: lang,
           },
         };
@@ -329,8 +345,32 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       // on required TextInput show the ! error immediately on load).
       pf_age: 0,
       pf_state: '',
+      pf_district: '',
+      pf_district_options: [],
       pf_language: lang,
     },
+  };
+}
+
+// Called when the user selects a state in FARMER_DETAILS — returns district options
+// for that state without navigating away (same screen, updated data).
+async function handleStateChange(
+  data: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const state = String(data.state ?? '').toLowerCase().replace(/ /g, '_');
+  logger.info('Flow STATE_CHANGE: state=%s', state);
+
+  let districtOptions: { id: string; title: string }[] = [];
+  try {
+    const districts = await getDistrictsByState(state);
+    districtOptions = districts.map((d) => ({ id: d, title: d }));
+  } catch (err) {
+    logger.warn('Flow STATE_CHANGE: could not load districts for state:', state, err);
+  }
+
+  return {
+    screen: 'FARMER_DETAILS',
+    data: { district_options: districtOptions },
   };
 }
 
