@@ -1,6 +1,6 @@
 # Run this workflow ONCE after generating keys to register the public key with Meta.
 # This enables RSA encryption for WhatsApp Flows endpoint mode.
-name: Upload Public Key (One-Time)
+name: Upload Public Key (O)
 
 on:
   workflow_dispatch:

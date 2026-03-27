@@ -1,7 +1,7 @@
 # Deletes all draft flows and deprecates old published flows.
 # Keeps only the latest PUBLISHED flow with data_api_version + endpoint_uri.
 # Prints the FLOW_ID to keep — update GitHub Secrets → FLOW_ID with this value, then re-run Deploy.
-name: Cleanup Old Flows
+name: Cleanup Old Flows (O)
 
 on:
   workflow_dispatch:

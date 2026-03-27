@@ -1,4 +1,4 @@
-name: Check Flows (Debug)
+name: Check Flows (O)
 
 on:
   workflow_dispatch:

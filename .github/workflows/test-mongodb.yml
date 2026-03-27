@@ -1,4 +1,4 @@
-name: Test MongoDB connection
+name: Test MongoDB connection (O)
 
 on:
   workflow_dispatch:

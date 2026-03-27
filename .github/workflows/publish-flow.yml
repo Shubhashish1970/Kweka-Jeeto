@@ -1,6 +1,6 @@
 # Run this workflow AFTER the backend is deployed and the flow endpoint is live.
 # It publishes the draft flow created by the deploy-flow workflow.
-name: Publish Flow
+name: Publish Flow (O)
 
 on:
   workflow_dispatch:

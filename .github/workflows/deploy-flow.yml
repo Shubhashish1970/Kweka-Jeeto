@@ -1,6 +1,6 @@
 # Run this workflow ONCE to create and publish the WhatsApp Flow.
 # Add the printed FLOW_ID to GitHub Secrets, then the main deploy workflow will use it.
-name: Deploy Flow (One-Time)
+name: Deploy Flow (O)
 
 on:
   workflow_dispatch:
