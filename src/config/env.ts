@@ -22,6 +22,8 @@ export const env = {
     verifyToken: getEnv('WHATSAPP_VERIFY_TOKEN', ''),
     wabaId: getEnv('WABA_ID', ''),
     flowId: getEnv('FLOW_ID', ''),
+    /** Set to "draft" when testing an unpublished flow. Omit or set to "published" in production. */
+    flowMode: getEnv('FLOW_MODE', 'published') as 'draft' | 'published',
     /** RSA private key (PEM) for Flow endpoint decryption. Stored as base64 in GitHub Secrets. */
     flowPrivateKey: getEnv('FLOW_PRIVATE_KEY', '')
       ? Buffer.from(getEnv('FLOW_PRIVATE_KEY', ''), 'base64').toString('utf-8')
