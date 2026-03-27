@@ -370,7 +370,12 @@ async function handleStateChange(
 
   return {
     screen: 'FARMER_DETAILS',
-    data: { district_options: districtOptions },
+    data: {
+      district_options: districtOptions,
+      // Must echo pf_state back — without it, WhatsApp re-applies init-values
+      // and ${data.pf_state} resolves to empty, wiping the selected state.
+      pf_state: state,
+    },
   };
 }
 
