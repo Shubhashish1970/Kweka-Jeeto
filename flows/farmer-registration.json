@@ -298,11 +298,8 @@
               }
             ],
             "init-values": {
-              "farmer_name": "${data.pf_farmer_name}",
               "age": "${data.pf_age}",
-              "profession": "${data.pf_profession}",
               "state": "${data.pf_state}",
-              "district": "${data.pf_district}",
               "language": "${data.pf_language}"
             }
           }

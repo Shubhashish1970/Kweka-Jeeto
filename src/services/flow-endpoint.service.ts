@@ -324,12 +324,11 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       welcome_title: getLocalizedString(rawWelcomeTitle, lang, 'flow_welcome_title'),
       welcome_body: getLocalizedString(rawWelcomeBody, lang, 'flow_welcome_body'),
       button_label: getLocalizedString(rawWelcomeButton, lang, 'flow_welcome_button_label'),
-      // Empty prefill for new farmers (data schema requires all declared fields)
-      pf_farmer_name: '',
+      // Prefill for new farmers — only non-text fields to avoid triggering
+      // WhatsApp's required-field validation on first render (empty string init-values
+      // on required TextInput show the ! error immediately on load).
       pf_age: 0,
-      pf_profession: '',
       pf_state: '',
-      pf_district: '',
       pf_language: lang,
     },
   };

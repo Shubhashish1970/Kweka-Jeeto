@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -7,8 +7,8 @@ import Farmers from './pages/Farmers';
 import Reports from './pages/Reports';
 import Config from './pages/Config';
 import FarmerEdit from './pages/FarmerEdit';
-import CropConfig from './pages/CropConfig';
 import CropConfigEdit from './pages/CropConfigEdit';
+import MastersPage from './pages/MastersPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated, authDisabled } = useAuth();
@@ -42,11 +42,21 @@ export default function App() {
           <Route path="farmers/:id/edit" element={<FarmerEdit />} />
           <Route path="reports" element={<Reports />} />
           <Route path="config" element={<Config />} />
-          <Route path="crop-config" element={<CropConfig />} />
-          <Route path="crop-config/:state" element={<CropConfigEdit />} />
+          {/* Masters: States & Districts + Crop Config */}
+          <Route path="masters" element={<MastersPage />} />
+          <Route path="masters/crop/:state" element={<CropConfigEdit />} />
+          {/* Legacy crop-config routes — redirect to masters */}
+          <Route path="crop-config" element={<Navigate to="/masters?tab=crops" replace />} />
+          <Route path="crop-config/:state" element={<CropConfigEditRedirect />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
+}
+
+// Redirect old /crop-config/:state links to new /masters/crop/:state
+function CropConfigEditRedirect() {
+  const { state } = useParams<{ state: string }>();
+  return <Navigate to={`/masters/crop/${state}`} replace />;
 }

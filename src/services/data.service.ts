@@ -1,4 +1,5 @@
 import * as farmerRepo from '../data/repositories/farmer.repository';
+import * as stateMasterRepo from '../data/repositories/stateMaster.repository';
 import * as configRepo from '../data/repositories/config.repository';
 import * as auditRepo from '../data/repositories/audit.repository';
 import * as stateCropRepo from '../data/repositories/stateCrop.repository';
@@ -45,3 +46,14 @@ export const addCropToState = stateCropRepo.addCropToState;
 export const updateCropInState = stateCropRepo.updateCropInState;
 export const deleteCropFromState = stateCropRepo.deleteCropFromState;
 export const seedStateCrops = stateCropRepo.seedStateCrops;
+
+export const getAllStateMasters = stateMasterRepo.getAllStateMasters;
+export const getStateMaster = stateMasterRepo.getStateMaster;
+export const getDistrictsByState = stateMasterRepo.getDistrictsByState;
+export const createStateMaster = stateMasterRepo.createStateMaster;
+export const updateStateMaster = stateMasterRepo.updateStateMaster;
+export const deleteStateMaster = stateMasterRepo.deleteStateMaster;
+export const addDistrict = stateMasterRepo.addDistrict;
+export const removeDistrict = stateMasterRepo.removeDistrict;
+export const replaceDistricts = stateMasterRepo.replaceDistricts;
+export const seedStateMasters = stateMasterRepo.seedStateMasters;

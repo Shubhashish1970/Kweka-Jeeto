@@ -7,10 +7,11 @@ const ROUTES: { path: string; label: string }[] = [
   { path: '/farmers', label: 'Farmers' },
   { path: '/reports', label: 'Reports' },
   { path: '/config', label: 'Config' },
-  { path: '/crop-config', label: 'Crop Config' },
+  { path: '/masters', label: 'Masters' },
 ];
 
 function getPageTitle(pathname: string): string {
+  if (pathname.startsWith('/masters')) return 'Masters';
   const r = ROUTES.find(({ path }) => pathname === path || pathname.startsWith(path + '/'));
   return r?.label ?? 'Admin';
 }

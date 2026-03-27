@@ -277,3 +277,137 @@ adminRouter.delete('/state-crops/:state/crops/:cropId', verifyAuth, async (req: 
     res.status(500).json({ error: 'Failed to delete crop' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Masters — State & District endpoints
+// ---------------------------------------------------------------------------
+
+adminRouter.get('/masters/states', verifyAuth, async (_req: Request, res: Response) => {
+  try {
+    const docs = await dataService.getAllStateMasters();
+    res.json(docs);
+  } catch (err) {
+    logger.error('Get state masters error:', err);
+    res.status(500).json({ error: 'Failed to fetch states' });
+  }
+});
+
+adminRouter.post('/masters/states', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { state, stateLabel, districts } = req.body;
+    if (!state || !stateLabel) {
+      res.status(400).json({ error: 'state and stateLabel are required' });
+      return;
+    }
+    const doc = await dataService.createStateMaster(
+      String(state).toLowerCase().replace(/\s+/g, '_'),
+      String(stateLabel),
+      Array.isArray(districts) ? districts : []
+    );
+    res.status(201).json(doc);
+  } catch (err: unknown) {
+    if ((err as { code?: number })?.code === 11000) {
+      res.status(409).json({ error: 'State already exists' });
+      return;
+    }
+    logger.error('Create state master error:', err);
+    res.status(500).json({ error: 'Failed to create state' });
+  }
+});
+
+adminRouter.put('/masters/states/:state', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { stateLabel, active } = req.body;
+    const updates: Record<string, unknown> = {};
+    if (stateLabel !== undefined) updates.stateLabel = stateLabel;
+    if (active !== undefined) updates.active = active;
+    const doc = await dataService.updateStateMaster(req.params.state, updates);
+    if (!doc) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Update state master error:', err);
+    res.status(500).json({ error: 'Failed to update state' });
+  }
+});
+
+adminRouter.delete('/masters/states/:state', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const deleted = await dataService.deleteStateMaster(req.params.state);
+    if (!deleted) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Delete state master error:', err);
+    res.status(500).json({ error: 'Failed to delete state' });
+  }
+});
+
+adminRouter.get('/masters/states/:state/districts', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const districts = await dataService.getDistrictsByState(req.params.state);
+    res.json({ districts });
+  } catch (err) {
+    logger.error('Get districts error:', err);
+    res.status(500).json({ error: 'Failed to fetch districts' });
+  }
+});
+
+adminRouter.post('/masters/states/:state/districts', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { district } = req.body;
+    if (!district) {
+      res.status(400).json({ error: 'district name required' });
+      return;
+    }
+    const doc = await dataService.addDistrict(req.params.state, String(district));
+    if (!doc) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Add district error:', err);
+    res.status(500).json({ error: 'Failed to add district' });
+  }
+});
+
+adminRouter.delete('/masters/states/:state/districts/:district', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const doc = await dataService.removeDistrict(
+      req.params.state,
+      decodeURIComponent(req.params.district)
+    );
+    if (!doc) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Remove district error:', err);
+    res.status(500).json({ error: 'Failed to remove district' });
+  }
+});
+
+adminRouter.put('/masters/states/:state/districts', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { districts } = req.body;
+    if (!Array.isArray(districts)) {
+      res.status(400).json({ error: 'districts array required' });
+      return;
+    }
+    const doc = await dataService.replaceDistricts(req.params.state, districts);
+    if (!doc) {
+      res.status(404).json({ error: 'State not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Replace districts error:', err);
+    res.status(500).json({ error: 'Failed to replace districts' });
+  }
+});
