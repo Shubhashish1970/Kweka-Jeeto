@@ -246,6 +246,11 @@ export const getNextScreen = async (
 
   if (action === 'data_exchange') {
     switch (screen) {
+      case 'WELCOME':
+        if (String(data.action_type ?? '') === 'welcome_button') {
+          return handleWelcomeButton(data);
+        }
+        break;
       case 'FARMER_DETAILS':
         // Differentiate state-change (on-select-action) from form submit (Continue)
         if (String(data.action_type ?? '') === 'state_change') {
@@ -336,6 +341,45 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       pf_language: lang,
     },
   };
+}
+
+// Called when WELCOME button is clicked — returns FARMER_DETAILS with district options
+// pre-loaded (for returning farmers) and pf_* prefill values.
+async function handleWelcomeButton(
+  data: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const pfState = String(data.pf_state ?? '').toLowerCase().replace(/ /g, '_');
+  logger.info('Flow WELCOME_BUTTON: pf_state=%s', pfState || '(new farmer)');
+
+  let districtOptions: { id: string; title: string }[] = [];
+  if (pfState) {
+    try {
+      const districts = await getDistrictsByState(pfState);
+      districtOptions = districts.map((d) => ({ id: d, title: d }));
+    } catch (err) {
+      logger.warn('Flow WELCOME_BUTTON: could not load districts for state:', pfState, err);
+    }
+  }
+
+  const pfFarmerName = String(data.pf_farmer_name ?? '');
+  const pfAge = Number(data.pf_age ?? 0);
+  const pfProfession = String(data.pf_profession ?? '');
+  const pfDistrict = String(data.pf_district ?? '');
+  const pfLanguage = String(data.pf_language ?? 'en') || 'en';
+
+  const responseData: Record<string, unknown> = {
+    district_options: districtOptions,
+    pf_language: pfLanguage,
+  };
+
+  // Only include prefill values when non-empty — avoids validation errors on new-farmer screens
+  if (pfFarmerName) responseData.pf_farmer_name = pfFarmerName;
+  if (pfAge > 0)    responseData.pf_age = pfAge;
+  if (pfProfession) responseData.pf_profession = pfProfession;
+  if (pfState)      responseData.pf_state = pfState;
+  if (pfDistrict)   responseData.pf_district = pfDistrict;
+
+  return { screen: 'FARMER_DETAILS', data: responseData };
 }
 
 // Called when the user selects a state in FARMER_DETAILS — returns district options

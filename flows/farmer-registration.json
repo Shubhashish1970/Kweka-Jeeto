@@ -84,18 +84,9 @@
             "type": "Footer",
             "label": "${data.button_label}",
             "on-click-action": {
-              "name": "navigate",
-              "next": {
-                "type": "screen",
-                "name": "FARMER_DETAILS"
-              },
+              "name": "data_exchange",
               "payload": {
-                "pf_farmer_name": "${data.pf_farmer_name}",
-                "pf_age": "${data.pf_age}",
-                "pf_profession": "${data.pf_profession}",
-                "pf_state": "${data.pf_state}",
-                "pf_district": "${data.pf_district}",
-                "pf_language": "${data.pf_language}"
+                "action_type": "welcome_button"
               }
             }
           }
@@ -179,8 +170,7 @@
                 "label": "Full Name",
                 "required": true,
                 "input-type": "text",
-                "helper-text": "As you would like to be addressed",
-                "init-value": "${data.pf_farmer_name}"
+                "helper-text": "As you would like to be addressed"
               },
               {
                 "type": "TextInput",
@@ -220,8 +210,7 @@
                     "id": "other",
                     "title": "Other"
                   }
-                ],
-                "init-value": "${data.pf_profession}"
+                ]
               },
               {
                 "type": "Dropdown",
@@ -303,8 +292,7 @@
                 "name": "district",
                 "label": "District",
                 "required": true,
-                "data-source": "${data.district_options}",
-                "init-value": "${data.pf_district}"
+                "data-source": "${data.district_options}"
               },
               {
                 "type": "Dropdown",
@@ -351,8 +339,11 @@
               }
             ],
             "init-values": {
+              "farmer_name": "${data.pf_farmer_name}",
               "age": "${data.pf_age}",
+              "profession": "${data.pf_profession}",
               "state": "${data.pf_state}",
+              "district": "${data.pf_district}",
               "language": "${data.pf_language}"
             }
           }
