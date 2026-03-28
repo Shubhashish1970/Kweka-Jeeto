@@ -498,6 +498,7 @@ async function handleCropSelection(
   flowToken: string
 ): Promise<Record<string, unknown>> {
   const waId = decodeWaIdFromFlowToken(flowToken);
+  logger.info('Flow CROP_SELECTION: received data keys=%s landholding_value=%s landholding_unit=%s', Object.keys(data).join(','), data.landholding_value, data.landholding_unit);
   const lang: Language = validateLanguage(String(data.language ?? 'en'));
   const farmerName = String(data.farmer_name ?? 'Farmer');
   const cropId = String(data.crop ?? '');

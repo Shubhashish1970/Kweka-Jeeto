@@ -66,7 +66,7 @@
             "src": "${data.header_image_src}",
             "height": 300,
             "scale-type": "cover",
-            "alt-text": "Kweka Jeeto — Agri Advisory"
+            "alt-text": "Kweka Jeeto \u2014 Agri Advisory"
           },
           {
             "type": "TextHeading",
@@ -312,19 +312,19 @@
                   },
                   {
                     "id": "hi",
-                    "title": "हिंदी (Hindi)"
+                    "title": "\u0939\u093f\u0902\u0926\u0940 (Hindi)"
                   },
                   {
                     "id": "mr",
-                    "title": "मराठी (Marathi)"
+                    "title": "\u092e\u0930\u093e\u0920\u0940 (Marathi)"
                   },
                   {
                     "id": "te",
-                    "title": "తెలుగు (Telugu)"
+                    "title": "\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41 (Telugu)"
                   },
                   {
                     "id": "bn",
-                    "title": "বাংলা (Bengali)"
+                    "title": "\u09ac\u09be\u0982\u09b2\u09be (Bengali)"
                   }
                 ]
               },
@@ -536,7 +536,9 @@
                     "district": "${data.district}",
                     "crop": "${form.crop}",
                     "advisory_start_date": "${form.advisory_start_date}",
-                    "language": "${data.language}"
+                    "language": "${data.language}",
+                    "landholding_value": "${form.landholding_value}",
+                    "landholding_unit": "${form.landholding_unit}"
                   }
                 }
               }
@@ -590,7 +592,7 @@
           },
           {
             "type": "TextCaption",
-            "text": "Kweka Jeeto — Your Farming Companion"
+            "text": "Kweka Jeeto \u2014 Your Farming Companion"
           },
           {
             "type": "Footer",
