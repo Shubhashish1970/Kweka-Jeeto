@@ -494,9 +494,10 @@ async function handleFarmerDetails(
       state_label: stateLabel,
       district: data.district,
       language: lang,
-      // Pre-fill existing crop and advisory date via CROP_SELECTION Form init-values
-      pf_crop: pfCrop,
-      pf_advisory_start_date: pfAdvisoryDate,
+      // Pre-fill existing crop and advisory date — only include when non-empty to avoid
+      // triggering immediate ! validation on required date field for new farmers.
+      ...(pfCrop ? { pf_crop: pfCrop } : {}),
+      ...(pfAdvisoryDate ? { pf_advisory_start_date: pfAdvisoryDate } : {}),
     },
   };
 }
