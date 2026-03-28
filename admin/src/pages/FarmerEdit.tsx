@@ -102,6 +102,8 @@ export default function FarmerEdit() {
   const [landholdingAcres, setLandholdingAcres] = useState('');
   const [unitOptions, setUnitOptions] = useState<LandholdingUnit[]>([]);
   const [waId, setWaId] = useState('');
+  const [localNumber, setLocalNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -118,6 +120,9 @@ export default function FarmerEdit() {
       const farmer = farmersRes.farmers.find((f) => f._id === id);
       if (farmer) {
         setWaId(farmer.wa_id);
+        const m = formatMobile(farmer.wa_id);
+        setCountryCode(m.countryCode);
+        setLocalNumber(m.local);
         setForm({
           farmer_name: farmer.farmer_name,
           age: farmer.age,
@@ -160,7 +165,9 @@ export default function FarmerEdit() {
         val > 0 && landholdingUnit && acres > 0
           ? { value: val, unit: landholdingUnit, acres }
           : null;
-      await api.put(`/farmers/${id}`, { ...form, landholding });
+      // Reconstruct wa_id from country code + local number (strip + from country code)
+      const newWaId = countryCode.replace('+', '') + localNumber.replace(/\s/g, '');
+      await api.put(`/farmers/${id}`, { ...form, landholding, wa_id: newWaId });
       setToast({ type: 'success', message: 'Farmer updated successfully.' });
       setTimeout(() => navigate('/farmers'), 1200);
     } catch {
@@ -217,13 +224,12 @@ export default function FarmerEdit() {
         {/* Title row */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900">Edit Farmer</h1>
-          {waId && (() => { const m = formatMobile(waId); return (
+          {waId && (
             <p className="text-sm text-slate-500 mt-0.5">
               Mobile:{' '}
-              <span className="font-medium text-slate-700">{m.countryCode}</span>{' '}
-              <span className="font-medium text-slate-700">{m.local}</span>
+              <span className="font-medium text-slate-700">{countryCode} {localNumber}</span>
             </p>
-          ); })()}
+          )}
         </div>
 
         {/* Two-column grid */}
@@ -270,18 +276,20 @@ export default function FarmerEdit() {
                 <div className="flex gap-2">
                   <input
                     className={`h-10 px-3 rounded-lg border border-slate-200 text-sm bg-slate-50 text-slate-500 w-20 text-center`}
-                    value={waId ? formatMobile(waId).countryCode : ''}
+                    value={countryCode}
                     readOnly
                     title="Country code"
                   />
                   <input
-                    className={`h-10 px-3 rounded-lg border border-slate-200 text-sm bg-slate-50 text-slate-500 flex-1`}
-                    value={waId ? formatMobile(waId).local : ''}
-                    readOnly
+                    className={inputCls}
+                    value={localNumber}
+                    onChange={(e) => setLocalNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="10-digit number"
+                    maxLength={12}
                     title="Local number"
                   />
                 </div>
-                <p className="text-xs text-slate-400 mt-1">WhatsApp ID — cannot be changed</p>
+                <p className="text-xs text-slate-400 mt-1">Update if farmer changed their WhatsApp number</p>
               </div>
             </div>
           </div>

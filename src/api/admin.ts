@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import * as dataService from '../services/data.service';
+import { getFarmerByWaId } from '../data/repositories/farmer.repository';
 import { logger } from '../utils/logger';
 
 export const adminRouter = Router();
@@ -83,11 +84,22 @@ adminRouter.get('/farmers', verifyAuth, async (req: Request, res: Response) => {
 
 adminRouter.put('/farmers/:id', verifyAuth, async (req: Request, res: Response) => {
   try {
-    const { farmer_name, age, profession, state, district, crop, advisory_start_date, landholding } = req.body;
+    const { farmer_name, age, profession, state, district, crop, advisory_start_date, landholding, wa_id } = req.body;
+
+    // Check new wa_id doesn't belong to a different farmer
+    if (wa_id) {
+      const existing = await getFarmerByWaId(String(wa_id));
+      if (existing && String(existing._id) !== req.params.id) {
+        res.status(409).json({ error: 'This WhatsApp number is already registered to another farmer.' });
+        return;
+      }
+    }
+
     const updated = await dataService.updateFarmer(req.params.id, {
       farmer_name, age, profession, state, district, crop,
       advisory_start_date: advisory_start_date ? new Date(advisory_start_date) : undefined,
       landholding: landholding ?? undefined,
+      ...(wa_id ? { wa_id: String(wa_id) } : {}),
     });
     if (!updated) {
       res.status(404).json({ error: 'Farmer not found' });
