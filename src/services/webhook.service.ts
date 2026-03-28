@@ -1,9 +1,5 @@
 import { handleFlowCompletion } from './flow-response.service';
-import { sendFlowMessage, sendTextMessage, sendLanguageSelectionMessage } from './message.service';
-import { getFarmerByWaId } from '../data/repositories/farmer.repository';
-import { getSessionLanguage, setSessionLanguage } from '../data/repositories/userSession.repository';
-import { updateFarmerLanguageByWaId } from '../data/repositories/farmer.repository';
-import { LANGUAGE_CHOICE_MAP, LANGUAGE_CONFIRMED } from './language.service';
+import { sendFlowMessage, sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
 
 const FALLBACK_REPLY = 'Welcome to Kweka Jeeto! If you did not receive the registration form, please try again in a moment.';
@@ -15,22 +11,6 @@ function isFlowTrigger(body: string): boolean {
   return FLOW_TRIGGER_WORDS.some(
     (w) => lower === w || lower.startsWith(w + ' ') || lower.endsWith(' ' + w)
   );
-}
-
-/** Handle language selection from either a list_reply (lang_hi) or a text reply (1–5). */
-async function handleLanguageChoice(from: string, langCode: string): Promise<void> {
-  logger.info('Webhook: language selected lang=%s for', langCode, from);
-  await setSessionLanguage(from, langCode);
-  await updateFarmerLanguageByWaId(from, langCode).catch(() => {});
-
-  const confirmMsg = LANGUAGE_CONFIRMED[langCode] ?? LANGUAGE_CONFIRMED.en;
-  await sendTextMessage(from, confirmMsg);
-
-  const sent = await sendFlowMessage(from);
-  if (!sent) {
-    logger.warn('Flow not sent after language selection, sending fallback to', from);
-    await sendTextMessage(from, FALLBACK_REPLY).catch(() => {});
-  }
 }
 
 interface WebhookMessage {
@@ -80,24 +60,6 @@ export const processWebhookPayload = async (body: {
         const from = message.from;
         const type = message.type;
 
-        // ── Interactive: list_reply (language selection from list message) ────
-        if (type === 'interactive' && message.interactive?.type === 'list_reply') {
-          const rowId = message.interactive.list_reply?.id ?? '';
-          // Row IDs are prefixed "lang_" e.g. "lang_hi"
-          if (rowId.startsWith('lang_')) {
-            const langCode = rowId.replace('lang_', '');
-            try {
-              await handleLanguageChoice(from, langCode);
-            } catch (err) {
-              logger.error('Error handling list_reply language selection for', from, err);
-              await sendTextMessage(from, FALLBACK_REPLY).catch(() => {});
-            }
-          } else {
-            logger.info('Webhook: unrecognised list_reply id', rowId, 'from', from);
-          }
-          continue;
-        }
-
         // ── Interactive: nfm_reply (flow completion) ──────────────────────────
         if (type === 'interactive' && message.interactive?.type === 'nfm_reply') {
           const responseJson = message.interactive.nfm_reply?.response_json;
@@ -115,42 +77,15 @@ export const processWebhookPayload = async (body: {
           const rawBody = (message.text?.body ?? '').trim();
           logger.info('Webhook: text from', from, 'body=', JSON.stringify(rawBody));
 
-          // Text fallback for language selection (1–5), in case list message unsupported
-          const langCodeFromText = LANGUAGE_CHOICE_MAP[rawBody];
-          if (langCodeFromText) {
-            try {
-              await handleLanguageChoice(from, langCodeFromText);
-            } catch (err) {
-              logger.error('Error handling text language selection for', from, err);
-              await sendTextMessage(from, FALLBACK_REPLY).catch(() => {});
-            }
-            continue;
-          }
-
-          // Flow trigger words (hi / hello / start / register)
+          // Flow trigger words (hi / hello / start / register) — send flow for all users.
+          // Language selection is handled inside the flow as the first screen for new users.
           if (isFlowTrigger(rawBody)) {
             logger.info('Webhook: flow trigger from', from);
             try {
-              const [farmer, sessionLang] = await Promise.all([
-                getFarmerByWaId(from).catch(() => null),
-                getSessionLanguage(from).catch(() => null),
-              ]);
-
-              // Only skip language selection for REGISTERED farmers.
-              // An unregistered user may have a stale session but no farmer record —
-              // always show language selection so they can start fresh.
-              const isRegistered = !!(farmer?.farmer_name);
-              const hasLanguage = isRegistered && !!(farmer?.language || sessionLang);
-
-              if (hasLanguage) {
-                const sent = await sendFlowMessage(from);
-                if (!sent) {
-                  logger.warn('Flow message not sent, sending fallback to', from);
-                  await sendTextMessage(from, FALLBACK_REPLY).catch(() => {});
-                }
-              } else {
-                // Not registered or no language — show language selection
-                await sendLanguageSelectionMessage(from);
+              const sent = await sendFlowMessage(from);
+              if (!sent) {
+                logger.warn('Flow message not sent, sending fallback to', from);
+                await sendTextMessage(from, FALLBACK_REPLY).catch(() => {});
               }
             } catch (err) {
               logger.error('Error processing flow trigger for', from, err);
@@ -159,7 +94,7 @@ export const processWebhookPayload = async (body: {
             continue;
           }
 
-          logger.info('Webhook: text not a trigger or language reply, ignoring', from);
+          logger.info('Webhook: text not a trigger, ignoring', from);
 
         } else {
           logger.info('Webhook: unhandled message type', { from, type });

@@ -7,7 +7,7 @@ import { getFarmerByWaId, upsertFarmer } from '../data/repositories/farmer.repos
 import { getStateCrop } from '../data/repositories/stateCrop.repository';
 import { getDistrictsByState } from '../data/repositories/stateMaster.repository';
 import { getAllLandholdingUnits, getLandholdingUnitById } from '../data/repositories/landholdingUnit.repository';
-import { getSessionLanguage } from '../data/repositories/userSession.repository';
+import { getSessionLanguage, setSessionLanguage } from '../data/repositories/userSession.repository';
 import { getConfigValue } from '../data/repositories/config.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
@@ -248,6 +248,8 @@ export const getNextScreen = async (
 
   if (action === 'data_exchange') {
     switch (screen) {
+      case 'LANGUAGE_SELECTION':
+        return handleLanguageSelection(data, flowToken);
       case 'WELCOME':
         if (String(data.action_type ?? '') === 'welcome_button') {
           return handleWelcomeButton(data);
@@ -329,10 +331,48 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
     }
   }
 
-  // New farmer — resolve language from session (set before flow via language selection)
-  const sessionLang = waId ? await getSessionLanguage(waId).catch(() => null) : null;
-  const lang: Language = validateLanguage(sessionLang ?? DEFAULT_LANGUAGE);
-  logger.info('Flow INIT: new farmer', waId, 'lang:', lang);
+  // New farmer — show LANGUAGE_SELECTION screen first
+  logger.info('Flow INIT: new farmer', waId, '— showing LANGUAGE_SELECTION');
+  return {
+    screen: 'LANGUAGE_SELECTION',
+    data: {
+      header_image_src: FARM_HERO_IMAGE,
+      language_options: [
+        { id: 'en', title: 'English' },
+        { id: 'hi', title: 'हिन्दी (Hindi)' },
+        { id: 'mr', title: 'मराठी (Marathi)' },
+        { id: 'te', title: 'తెలుగు (Telugu)' },
+        { id: 'bn', title: 'বাংলা (Bengali)' },
+      ],
+    },
+  };
+}
+
+// Called when user submits LANGUAGE_SELECTION — stores language in session, returns WELCOME.
+async function handleLanguageSelection(
+  data: Record<string, unknown>,
+  flowToken: string
+): Promise<Record<string, unknown>> {
+  const selectedLang = String(data.language ?? 'en');
+  const lang: Language = validateLanguage(selectedLang);
+  const waId = decodeWaIdFromFlowToken(flowToken);
+
+  logger.info('Flow LANGUAGE_SELECTION: lang=%s waId=%s', lang, waId);
+
+  if (waId) {
+    try {
+      await setSessionLanguage(waId, lang);
+    } catch (err) {
+      logger.warn('Flow LANGUAGE_SELECTION: could not save session lang:', err);
+    }
+  }
+
+  const [rawWelcomeTitle, rawWelcomeBody, rawWelcomeButton] = await Promise.all([
+    getConfigValue<unknown>('flow_welcome_title'),
+    getConfigValue<unknown>('flow_welcome_body'),
+    getConfigValue<unknown>('flow_welcome_button_label'),
+  ]);
+
   return {
     screen: 'WELCOME',
     data: {
