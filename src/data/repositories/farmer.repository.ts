@@ -56,6 +56,11 @@ export const updateFarmerById = async (
   return Farmer.findByIdAndUpdate(id, { $set: data }, { new: true }).lean() as unknown as Promise<IFarmer | null>;
 };
 
+/** Update only the language field for an existing farmer (no-op if farmer not found). */
+export const updateFarmerLanguageByWaId = async (waId: string, language: string): Promise<void> => {
+  await Farmer.findOneAndUpdate({ wa_id: waId }, { $set: { language } });
+};
+
 export const deleteFarmerById = async (id: string): Promise<void> => {
   await Farmer.findByIdAndDelete(id);
 };

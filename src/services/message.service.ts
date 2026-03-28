@@ -2,6 +2,7 @@ import axios from 'axios';
 import { env } from '../config/env';
 import { getConfigValue } from './data.service';
 import { encodeFlowToken } from './flow-endpoint.service';
+import { translateText } from './language.service';
 import { logger } from '../utils/logger';
 
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
@@ -158,4 +159,18 @@ export const sendTextMessage = async (to: string, text: string): Promise<boolean
     logger.error('Failed to send text message:', msg);
     return false;
   }
+};
+
+/**
+ * Translates `text` from English to `language` (via Google Translate),
+ * then sends the result as a WhatsApp text message.
+ * Falls back to English if translation fails or key is not configured.
+ */
+export const sendLocalizedTextMessage = async (
+  to: string,
+  text: string,
+  language: string
+): Promise<boolean> => {
+  const localized = await translateText(text, language);
+  return sendTextMessage(to, localized);
 };

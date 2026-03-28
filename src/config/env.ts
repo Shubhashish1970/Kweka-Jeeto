@@ -38,6 +38,8 @@ export const env = {
     password: getEnv('ADMIN_PASSWORD', ''),
     jwtSecret: getEnv('ADMIN_JWT_SECRET', ''),
   },
+  /** Google Cloud Translation API key for translating messages to farmer's language. */
+  googleTranslateApiKey: getEnv('GOOGLE_TRANSLATE_API_KEY', ''),
   /** Secret for cron endpoints (e.g. daily advisory). Set in GitHub Secrets as CRON_SECRET. */
   cronSecret: getEnv('CRON_SECRET', ''),
   port: parseInt(getEnv('PORT', '8080'), 10),

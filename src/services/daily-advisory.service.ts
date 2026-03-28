@@ -1,6 +1,7 @@
 import { getConfigValue } from './data.service';
 import { getFarmersDueForDailyAdvisory, updateLastAdvisorySentAt } from '../data/repositories/farmer.repository';
 import { sendTextMessage } from './message.service';
+import { translateText } from './language.service';
 import { logger } from '../utils/logger';
 import { IFarmer } from '../data/models/Farmer';
 import { CROP_LABEL_MAP } from './flow-endpoint.service';
@@ -28,7 +29,9 @@ export const runDailyAdvisory = async (): Promise<{ sent: number; failed: number
   for (const farmer of farmers) {
     try {
       const message = await buildAdvisoryMessage(farmer);
-      const ok = await sendTextMessage(farmer.wa_id, message);
+      const lang = farmer.language || 'en';
+      const localizedMessage = lang !== 'en' ? await translateText(message, lang) : message;
+      const ok = await sendTextMessage(farmer.wa_id, localizedMessage);
       if (ok) {
         await updateLastAdvisorySentAt(String((farmer as IFarmer & { _id: unknown })._id));
         sent++;

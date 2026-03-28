@@ -52,10 +52,6 @@
         "pf_district": {
           "type": "string",
           "__example__": ""
-        },
-        "pf_language": {
-          "type": "string",
-          "__example__": "en"
         }
       },
       "layout": {
@@ -91,8 +87,7 @@
                 "pf_age": "${data.pf_age}",
                 "pf_profession": "${data.pf_profession}",
                 "pf_state": "${data.pf_state}",
-                "pf_district": "${data.pf_district}",
-                "pf_language": "${data.pf_language}"
+                "pf_district": "${data.pf_district}"
               }
             }
           }
@@ -122,10 +117,6 @@
         "pf_district": {
           "type": "string",
           "__example__": ""
-        },
-        "pf_language": {
-          "type": "string",
-          "__example__": "en"
         },
         "district_options": {
           "type": "array",
@@ -301,34 +292,6 @@
                 "data-source": "${data.district_options}"
               },
               {
-                "type": "Dropdown",
-                "name": "language",
-                "label": "Preferred Language",
-                "required": true,
-                "data-source": [
-                  {
-                    "id": "en",
-                    "title": "English"
-                  },
-                  {
-                    "id": "hi",
-                    "title": "\u0939\u093f\u0902\u0926\u0940 (Hindi)"
-                  },
-                  {
-                    "id": "mr",
-                    "title": "\u092e\u0930\u093e\u0920\u0940 (Marathi)"
-                  },
-                  {
-                    "id": "te",
-                    "title": "\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41 (Telugu)"
-                  },
-                  {
-                    "id": "bn",
-                    "title": "\u09ac\u09be\u0982\u09b2\u09be (Bengali)"
-                  }
-                ]
-              },
-              {
                 "type": "Footer",
                 "label": "Continue",
                 "on-click-action": {
@@ -349,8 +312,7 @@
               "age": "${data.pf_age}",
               "profession": "${data.pf_profession}",
               "state": "${data.pf_state}",
-              "district": "${data.pf_district}",
-              "language": "${data.pf_language}"
+              "district": "${data.pf_district}"
             }
           }
         ]
@@ -428,10 +390,6 @@
         "pf_advisory_start_date": {
           "type": "string",
           "__example__": ""
-        },
-        "language": {
-          "type": "string",
-          "__example__": "en"
         },
         "landholding_unit_options": {
           "type": "array",
@@ -536,7 +494,6 @@
                     "district": "${data.district}",
                     "crop": "${form.crop}",
                     "advisory_start_date": "${form.advisory_start_date}",
-                    "language": "${data.language}",
                     "landholding_value": "${form.landholding_value}",
                     "landholding_unit": "${form.landholding_unit}"
                   }

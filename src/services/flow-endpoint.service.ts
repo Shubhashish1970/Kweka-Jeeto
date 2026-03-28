@@ -7,6 +7,7 @@ import { getFarmerByWaId, upsertFarmer } from '../data/repositories/farmer.repos
 import { getStateCrop } from '../data/repositories/stateCrop.repository';
 import { getDistrictsByState } from '../data/repositories/stateMaster.repository';
 import { getAllLandholdingUnits, getLandholdingUnitById } from '../data/repositories/landholdingUnit.repository';
+import { getSessionLanguage } from '../data/repositories/userSession.repository';
 import { getConfigValue } from '../data/repositories/config.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
@@ -295,9 +296,9 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
     try {
       const existing = await getFarmerByWaId(waId);
       if (existing) {
-        const lang: Language = existing.language
-          ? validateLanguage(existing.language)
-          : DEFAULT_LANGUAGE;
+        // Returning farmer — use their stored language (or session if updated recently)
+        const sessionLang = await getSessionLanguage(waId).catch(() => null);
+        const lang: Language = validateLanguage(sessionLang ?? existing.language ?? DEFAULT_LANGUAGE);
         logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, 'crop:', existing.crop);
         const cropName = cropLabel(existing.crop);
         const vars = { name: existing.farmer_name, crop: cropName };
@@ -313,9 +314,8 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
               getLocalizedString(rawReturningBody, lang, 'flow_returning_body'), vars
             ),
             button_label: getLocalizedString(rawReturningButton, lang, 'flow_returning_button_label'),
-            // Pass returning farmer data via WELCOME navigate payload → FARMER_DETAILS
-            // Only include non-empty values — empty string on required fields triggers validation errors
-            pf_language: lang,
+            // Pass returning farmer data via WELCOME button payload → FARMER_DETAILS
+            // Language is no longer in the flow — it comes from session/DB
             ...(existing.farmer_name ? { pf_farmer_name: existing.farmer_name } : {}),
             ...(pfAge > 0 ? { pf_age: pfAge } : {}),
             ...(existing.profession ? { pf_profession: existing.profession } : {}),
@@ -329,8 +329,10 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
     }
   }
 
-  // New farmer — use default language (English)
-  const lang = DEFAULT_LANGUAGE;
+  // New farmer — resolve language from session (set before flow via language selection)
+  const sessionLang = waId ? await getSessionLanguage(waId).catch(() => null) : null;
+  const lang: Language = validateLanguage(sessionLang ?? DEFAULT_LANGUAGE);
+  logger.info('Flow INIT: new farmer', waId, 'lang:', lang);
   return {
     screen: 'WELCOME',
     data: {
@@ -338,8 +340,6 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       welcome_title: getLocalizedString(rawWelcomeTitle, lang, 'flow_welcome_title'),
       welcome_body: getLocalizedString(rawWelcomeBody, lang, 'flow_welcome_body'),
       button_label: getLocalizedString(rawWelcomeButton, lang, 'flow_welcome_button_label'),
-      // No pf_* prefill for new farmers — avoids validation errors on empty required fields
-      pf_language: lang,
     },
   };
 }
@@ -366,11 +366,9 @@ async function handleWelcomeButton(
   const pfAge = Number(data.pf_age ?? 0);
   const pfProfession = String(data.pf_profession ?? '');
   const pfDistrict = String(data.pf_district ?? '');
-  const pfLanguage = String(data.pf_language ?? 'en') || 'en';
 
   const responseData: Record<string, unknown> = {
     district_options: districtOptions,
-    pf_language: pfLanguage,
   };
 
   // Only include prefill values when non-empty — avoids validation errors on new-farmer screens
@@ -461,7 +459,19 @@ async function handleFarmerDetails(
     logger.warn('Flow FARMER_DETAILS: could not load landholding units:', err);
   }
 
-  const lang: Language = validateLanguage(String(data.language ?? 'en'));
+  // Language comes from session (set before flow) or existing farmer — NOT from form data
+  let lang: Language = DEFAULT_LANGUAGE;
+  if (waId) {
+    try {
+      const [farmer, sessionLang] = await Promise.all([
+        getFarmerByWaId(waId).catch(() => null),
+        getSessionLanguage(waId).catch(() => null),
+      ]);
+      lang = validateLanguage(sessionLang ?? farmer?.language ?? DEFAULT_LANGUAGE);
+    } catch {
+      // fallback to DEFAULT_LANGUAGE
+    }
+  }
 
   const rawCropSectionTitle = await getConfigValue<unknown>('flow_crop_section_title');
   const cropSectionTitle = applyTemplate(
@@ -483,7 +493,6 @@ async function handleFarmerDetails(
       state: data.state,
       state_label: stateLabel,
       district: data.district,
-      language: lang,
       // Pre-fill existing values — only include when non-empty/non-zero
       ...(pfCrop ? { pf_crop: pfCrop } : {}),
       ...(pfAdvisoryDate ? { pf_advisory_start_date: pfAdvisoryDate } : {}),
@@ -499,7 +508,20 @@ async function handleCropSelection(
 ): Promise<Record<string, unknown>> {
   const waId = decodeWaIdFromFlowToken(flowToken);
   logger.info('Flow CROP_SELECTION: received data keys=%s landholding_value=%s landholding_unit=%s', Object.keys(data).join(','), data.landholding_value, data.landholding_unit);
-  const lang: Language = validateLanguage(String(data.language ?? 'en'));
+
+  // Language comes from session or farmer record — no longer passed through the flow
+  let lang: Language = DEFAULT_LANGUAGE;
+  if (waId) {
+    try {
+      const [farmer, sessionLang] = await Promise.all([
+        getFarmerByWaId(waId).catch(() => null),
+        getSessionLanguage(waId).catch(() => null),
+      ]);
+      lang = validateLanguage(sessionLang ?? farmer?.language ?? DEFAULT_LANGUAGE);
+    } catch {
+      // fallback to DEFAULT_LANGUAGE
+    }
+  }
   const farmerName = String(data.farmer_name ?? 'Farmer');
   const cropId = String(data.crop ?? '');
   const cropName = cropLabel(cropId);
