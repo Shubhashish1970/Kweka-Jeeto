@@ -445,7 +445,17 @@
                 "type": "string"
               }
             }
-          }
+          },
+          "__example__": [
+            {
+              "id": "acre",
+              "title": "Acre"
+            },
+            {
+              "id": "hectare",
+              "title": "Hectare"
+            }
+          ]
         },
         "pf_landholding_value": {
           "type": "number",
