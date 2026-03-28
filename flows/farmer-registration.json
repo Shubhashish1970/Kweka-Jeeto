@@ -196,7 +196,8 @@
                 "label": "Full Name",
                 "required": true,
                 "input-type": "text",
-                "helper-text": "As you would like to be addressed"
+                "helper-text": "As you would like to be addressed",
+                "init-value": "${data.pf_farmer_name}"
               },
               {
                 "type": "TextInput",
@@ -211,7 +212,8 @@
                 "name": "profession",
                 "label": "Occupation",
                 "required": true,
-                "data-source": "${data.occupation_options}"
+                "data-source": "${data.occupation_options}",
+                "init-value": "${data.pf_profession}"
               },
               {
                 "type": "Dropdown",
@@ -293,7 +295,8 @@
                 "name": "district",
                 "label": "District",
                 "required": true,
-                "data-source": "${data.district_options}"
+                "data-source": "${data.district_options}",
+                "init-value": "${data.pf_district}"
               },
               {
                 "type": "Dropdown",
