@@ -29,6 +29,12 @@ interface LandholdingUnit {
   conversion_factor: number;
 }
 
+interface Occupation {
+  id: string;
+  label: string;
+  active?: boolean;
+}
+
 const STATE_OPTIONS = [
   { value: 'maharashtra', label: 'Maharashtra' },
   { value: 'punjab', label: 'Punjab' },
@@ -101,6 +107,8 @@ export default function FarmerEdit() {
   const [landholdingUnit, setLandholdingUnit] = useState('');
   const [landholdingAcres, setLandholdingAcres] = useState('');
   const [unitOptions, setUnitOptions] = useState<LandholdingUnit[]>([]);
+  const [occupationOptions, setOccupationOptions] = useState<Occupation[]>([]);
+  const [districtOptions, setDistrictOptions] = useState<string[]>([]);
   const [waId, setWaId] = useState('');
   const [localNumber, setLocalNumber] = useState('');
   const [countryCode, setCountryCode] = useState('');
@@ -115,8 +123,10 @@ export default function FarmerEdit() {
     Promise.all([
       api.get<{ farmers: Farmer[]; total: number }>(`/farmers?limit=1000`),
       api.get<LandholdingUnit[]>('/masters/landholding-units'),
-    ]).then(([farmersRes, units]) => {
+      api.get<Occupation[]>('/masters/occupations'),
+    ]).then(([farmersRes, units, occupations]) => {
       setUnitOptions(units.filter((u: LandholdingUnit & { active?: boolean }) => u.active !== false));
+      setOccupationOptions(occupations.filter((o) => o.active !== false));
       const farmer = farmersRes.farmers.find((f) => f._id === id);
       if (farmer) {
         setWaId(farmer.wa_id);
@@ -151,6 +161,14 @@ export default function FarmerEdit() {
     if (!unit) { setLandholdingAcres(''); return; }
     setLandholdingAcres(String(Math.round(val * unit.conversion_factor * 1000) / 1000));
   }, [landholdingValue, landholdingUnit, unitOptions]);
+
+  // Load districts when state changes
+  useEffect(() => {
+    if (!form.state) { setDistrictOptions([]); return; }
+    api.get<{ districts: string[] }>(`/masters/states/${form.state}/districts`)
+      .then((r) => setDistrictOptions(r.districts ?? []))
+      .catch(() => setDistrictOptions([]));
+  }, [form.state]);
 
   const handleChange = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -264,12 +282,16 @@ export default function FarmerEdit() {
               </div>
               <div>
                 <label className={labelCls}>Profession</label>
-                <input
+                <select
                   className={inputCls}
                   value={form.profession}
                   onChange={(e) => handleChange('profession', e.target.value)}
-                  placeholder="e.g. Farmer, Agronomist"
-                />
+                >
+                  <option value="">Select profession</option>
+                  {occupationOptions.map((o) => (
+                    <option key={o.id} value={o.id}>{o.label}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className={labelCls}>Mobile Number</label>
@@ -316,12 +338,25 @@ export default function FarmerEdit() {
               </div>
               <div>
                 <label className={labelCls}>District</label>
-                <input
-                  className={inputCls}
-                  value={form.district}
-                  onChange={(e) => handleChange('district', e.target.value)}
-                  placeholder="District name"
-                />
+                {districtOptions.length > 0 ? (
+                  <select
+                    className={inputCls}
+                    value={form.district}
+                    onChange={(e) => handleChange('district', e.target.value)}
+                  >
+                    <option value="">Select district</option>
+                    {districtOptions.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className={inputCls}
+                    value={form.district}
+                    onChange={(e) => handleChange('district', e.target.value)}
+                    placeholder={form.state ? 'No districts configured for this state' : 'Select a state first'}
+                  />
+                )}
               </div>
               <div>
                 <label className={labelCls}>Crop *</label>
