@@ -135,7 +135,12 @@ export const processWebhookPayload = async (body: {
                 getFarmerByWaId(from).catch(() => null),
                 getSessionLanguage(from).catch(() => null),
               ]);
-              const hasLanguage = !!(farmer?.language || sessionLang);
+
+              // Only skip language selection for REGISTERED farmers.
+              // An unregistered user may have a stale session but no farmer record —
+              // always show language selection so they can start fresh.
+              const isRegistered = !!(farmer?.farmer_name);
+              const hasLanguage = isRegistered && !!(farmer?.language || sessionLang);
 
               if (hasLanguage) {
                 const sent = await sendFlowMessage(from);
@@ -144,7 +149,7 @@ export const processWebhookPayload = async (body: {
                   await sendTextMessage(from, FALLBACK_REPLY).catch(() => {});
                 }
               } else {
-                // First interaction — send the polished list message
+                // Not registered or no language — show language selection
                 await sendLanguageSelectionMessage(from);
               }
             } catch (err) {
