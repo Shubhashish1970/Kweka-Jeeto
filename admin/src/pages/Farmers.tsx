@@ -144,16 +144,15 @@ export default function Farmers() {
             <div className="rounded-2xl border border-slate-200 overflow-hidden">
               <table className="w-full table-fixed border-collapse">
                 <colgroup>
+                  <col style={{ width: '12%' }} />
                   <col style={{ width: '11%' }} />
-                  <col style={{ width: '10%' }} />
                   <col style={{ width: '4%' }} />
+                  <col style={{ width: '10%' }} />
                   <col style={{ width: '9%' }} />
-                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '9%' }} />
                   <col style={{ width: '7%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '6%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '9%' }} />
+                  <col style={{ width: '9%' }} />
                   <col style={{ width: '5%' }} />
                   <col style={{ width: '5%' }} />
                 </colgroup>
@@ -165,7 +164,6 @@ export default function Farmers() {
                     <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">State</th>
                     <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">District</th>
                     <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Crop</th>
-                    <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Landholding</th>
                     <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Acres</th>
                     <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Advisory Date</th>
                     <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Registered</th>
@@ -181,9 +179,6 @@ export default function Farmers() {
                       <td className="px-3 py-2 text-sm text-slate-700 truncate">{f.state}</td>
                       <td className="px-3 py-2 text-sm text-slate-700 truncate">{f.district}</td>
                       <td className="px-3 py-2 text-sm text-slate-700 truncate">{f.crop}</td>
-                      <td className="px-3 py-2 text-sm text-slate-700 truncate">
-                        {f.landholding ? `${f.landholding.value} ${f.landholding.unit}` : '—'}
-                      </td>
                       <td className="px-3 py-2 text-sm text-slate-700">
                         {f.landholding ? `${f.landholding.acres} ac` : '—'}
                       </td>
