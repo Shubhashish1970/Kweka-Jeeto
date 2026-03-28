@@ -1,0 +1,16 @@
+---
+description: Firebase and deployment auth — use GCP_SA_KEY only; signoff required for Firebase service account
+alwaysApply: true
+---
+
+# Deployment: Firebase Hosting
+
+## Standard for all deployments
+
+- **Use only GCP_SA_KEY and `firebase deploy --only hosting`** for deploying the admin app to Firebase Hosting (e.g. in GitHub Actions or docs).
+- Do not add or recommend use of `FIREBASE_SERVICE_ACCOUNT_KWEKA_JEETO` or the workflows "Deploy to Firebase Hosting on merge" / "Deploy to Firebase Hosting on PR" unless the user explicitly approves.
+
+## Signoff required
+
+- Before using **FIREBASE_SERVICE_ACCOUNT_KWEKA_JEETO** or changing/adding steps that rely on the Firebase Hosting merge or PR workflows, **take explicit signoff from the user**.
+- Do not assume approval; ask first.

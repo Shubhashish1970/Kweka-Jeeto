@@ -432,6 +432,28 @@
         "language": {
           "type": "string",
           "__example__": "en"
+        },
+        "landholding_unit_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "pf_landholding_value": {
+          "type": "number",
+          "__example__": 0
+        },
+        "pf_landholding_unit": {
+          "type": "string",
+          "__example__": ""
         }
       },
       "layout": {
@@ -464,6 +486,25 @@
                 "data-source": "${data.crop_options}"
               },
               {
+                "type": "TextHeading",
+                "text": "Your Farm"
+              },
+              {
+                "type": "TextInput",
+                "name": "landholding_value",
+                "label": "Landholding Size",
+                "input-type": "number",
+                "required": false,
+                "helper-text": "Enter the size of your farm"
+              },
+              {
+                "type": "Dropdown",
+                "name": "landholding_unit",
+                "label": "Unit",
+                "required": false,
+                "data-source": "${data.landholding_unit_options}"
+              },
+              {
                 "type": "DatePicker",
                 "name": "advisory_start_date",
                 "label": "Start advisory from",
@@ -492,7 +533,9 @@
             ],
             "init-values": {
               "crop": "${data.pf_crop}",
-              "advisory_start_date": "${data.pf_advisory_start_date}"
+              "advisory_start_date": "${data.pf_advisory_start_date}",
+              "landholding_value": "${data.pf_landholding_value}",
+              "landholding_unit": "${data.pf_landholding_unit}"
             }
           }
         ]

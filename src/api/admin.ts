@@ -471,3 +471,64 @@ adminRouter.delete('/masters/occupations/:id', verifyAuth, async (req: Request, 
     res.status(500).json({ error: 'Failed to delete occupation' });
   }
 });
+
+// ─── Landholding Unit Masters ─────────────────────────────────────────────────
+
+adminRouter.get('/masters/landholding-units', verifyAuth, async (_req: Request, res: Response) => {
+  try {
+    const docs = await dataService.getAllLandholdingUnitsAdmin();
+    res.json(docs);
+  } catch (err) {
+    logger.error('Get landholding units error:', err);
+    res.status(500).json({ error: 'Failed to get landholding units' });
+  }
+});
+
+adminRouter.post('/masters/landholding-units', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { id, label, conversion_factor, order } = req.body;
+    if (!id || !label || conversion_factor == null) {
+      res.status(400).json({ error: 'id, label and conversion_factor required' });
+      return;
+    }
+    const doc = await dataService.createLandholdingUnit(String(id), String(label), Number(conversion_factor), Number(order ?? 0));
+    res.status(201).json(doc);
+  } catch (err) {
+    logger.error('Create landholding unit error:', err);
+    res.status(500).json({ error: 'Failed to create landholding unit' });
+  }
+});
+
+adminRouter.put('/masters/landholding-units/:id', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { label, conversion_factor, active, order } = req.body;
+    const updates: Record<string, unknown> = {};
+    if (label !== undefined) updates.label = String(label);
+    if (conversion_factor !== undefined) updates.conversion_factor = Number(conversion_factor);
+    if (active !== undefined) updates.active = Boolean(active);
+    if (order !== undefined) updates.order = Number(order);
+    const doc = await dataService.updateLandholdingUnit(req.params.id, updates);
+    if (!doc) {
+      res.status(404).json({ error: 'Landholding unit not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Update landholding unit error:', err);
+    res.status(500).json({ error: 'Failed to update landholding unit' });
+  }
+});
+
+adminRouter.delete('/masters/landholding-units/:id', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const deleted = await dataService.deleteLandholdingUnit(req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: 'Landholding unit not found' });
+      return;
+    }
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Delete landholding unit error:', err);
+    res.status(500).json({ error: 'Failed to delete landholding unit' });
+  }
+});

@@ -31,7 +31,15 @@ interface OccupationMaster {
   order: number;
 }
 
-type Tab = 'states' | 'occupations' | 'crops';
+interface LandholdingUnit {
+  id: string;
+  label: string;
+  conversion_factor: number;
+  active: boolean;
+  order: number;
+}
+
+type Tab = 'states' | 'occupations' | 'landholding' | 'crops';
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 
@@ -635,6 +643,233 @@ function OccupationsTab() {
   );
 }
 
+// ── Landholding Units Tab ─────────────────────────────────────────────────────
+
+interface LandholdingModalProps {
+  mode: 'add' | 'edit';
+  id: string;
+  label: string;
+  conversion_factor: number;
+  order: number;
+  active: boolean;
+  saving: boolean;
+  onChangeId: (v: string) => void;
+  onChangeLabel: (v: string) => void;
+  onChangeFactor: (v: number) => void;
+  onChangeOrder: (v: number) => void;
+  onChangeActive: (v: boolean) => void;
+  onSave: () => void;
+  onClose: () => void;
+}
+
+function LandholdingModal({ mode, id, label, conversion_factor, order, active, saving, onChangeId, onChangeLabel, onChangeFactor, onChangeOrder, onChangeActive, onSave, onClose }: LandholdingModalProps) {
+  const firstRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { firstRef.current?.focus(); }, []);
+  const valid = id.trim() && label.trim() && conversion_factor > 0;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-100">
+          <h2 className="text-lg font-bold text-slate-900">{mode === 'add' ? 'Add Landholding Unit' : 'Edit Landholding Unit'}</h2>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Unit ID (slug)</label>
+            <input ref={firstRef} className={inputCls + (mode === 'edit' ? ' bg-slate-50 text-slate-400 cursor-not-allowed' : '')} placeholder="e.g. bigha" value={id} disabled={mode === 'edit'} onChange={(e) => onChangeId(e.target.value.toLowerCase().replace(/\s+/g, '_'))} />
+            {mode === 'edit' && <p className="text-xs text-slate-400 mt-1">ID cannot be changed.</p>}
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Label</label>
+            <input className={inputCls} placeholder="e.g. Bigha" value={label} onChange={(e) => onChangeLabel(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Conversion Factor (to Acres)</label>
+            <input type="number" step="0.000001" min="0.000001" className={inputCls} placeholder="e.g. 0.619" value={conversion_factor} onChange={(e) => onChangeFactor(Number(e.target.value))} />
+            <p className="text-xs text-slate-400 mt-1">1 {label || 'unit'} = {conversion_factor || '?'} acre{conversion_factor !== 1 ? 's' : ''}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Display Order</label>
+              <input type="number" className={inputCls} value={order} min={0} onChange={(e) => onChangeOrder(Number(e.target.value))} />
+            </div>
+            <div className="flex items-center gap-2 pt-5">
+              <input type="checkbox" id="lh-active" checked={active} onChange={(e) => onChangeActive(e.target.checked)} className="w-4 h-4 rounded accent-primary" />
+              <label htmlFor="lh-active" className="text-sm font-medium text-slate-700">Active</label>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="primary" onClick={onSave} disabled={saving || !valid}>
+            {saving ? 'Saving…' : mode === 'add' ? 'Add Unit' : 'Save Changes'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LandholdingTab() {
+  const [units, setUnits] = useState<LandholdingUnit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [modal, setModal] = useState<{ mode: 'add' | 'edit'; id: string; label: string; conversion_factor: number; order: number; active: boolean } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<LandholdingUnit | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    api.get<LandholdingUnit[]>('/masters/landholding-units')
+      .then((docs) => setUnits(docs.sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))))
+      .catch(() => setToast({ type: 'error', message: 'Failed to load landholding units.' }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!modal) return;
+    setSaving(true);
+    try {
+      if (modal.mode === 'add') {
+        const created = await api.post<LandholdingUnit>('/masters/landholding-units', { id: modal.id, label: modal.label, conversion_factor: modal.conversion_factor, order: modal.order });
+        setUnits((prev) => [...prev, created].sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)));
+        setToast({ type: 'success', message: 'Unit added.' });
+      } else {
+        const updated = await api.put<LandholdingUnit>(`/masters/landholding-units/${modal.id}`, { label: modal.label, conversion_factor: modal.conversion_factor, order: modal.order, active: modal.active });
+        setUnits((prev) => prev.map((u) => u.id === modal.id ? updated : u).sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)));
+        setToast({ type: 'success', message: 'Unit updated.' });
+      }
+      setModal(null);
+    } catch {
+      setToast({ type: 'error', message: `Failed to ${modal.mode} unit.` });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/masters/landholding-units/${deleteTarget.id}`);
+      setUnits((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setToast({ type: 'success', message: 'Unit deleted.' });
+    } catch {
+      setToast({ type: 'error', message: 'Failed to delete unit.' });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 py-8 text-sm text-slate-500">
+        <svg className="w-4 h-4 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+        Loading landholding units…
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+
+      {modal && (
+        <LandholdingModal
+          mode={modal.mode}
+          id={modal.id}
+          label={modal.label}
+          conversion_factor={modal.conversion_factor}
+          order={modal.order}
+          active={modal.active}
+          saving={saving}
+          onChangeId={(v) => setModal((m) => m && { ...m, id: v })}
+          onChangeLabel={(v) => setModal((m) => m && { ...m, label: v })}
+          onChangeFactor={(v) => setModal((m) => m && { ...m, conversion_factor: v })}
+          onChangeOrder={(v) => setModal((m) => m && { ...m, order: v })}
+          onChangeActive={(v) => setModal((m) => m && { ...m, active: v })}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Landholding Unit"
+        message={`Delete "${deleteTarget?.label}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <div className="bg-white rounded-2xl border border-slate-200 border-l-4 border-l-primary shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Landholding Units</h2>
+            <p className="text-sm text-slate-500 mt-0.5">Configure units and their conversion factors to acres. Farmers pick their preferred unit during onboarding.</p>
+          </div>
+          <Button variant="primary" onClick={() => setModal({ mode: 'add', id: '', label: '', conversion_factor: 1, order: units.length + 1, active: true })}>
+            + Add Unit
+          </Button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider w-32">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Label</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-40">Factor (→ Acres)</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider w-20">Order</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-32">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {units.map((u) => (
+                <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="px-6 py-4 font-mono text-slate-500 text-xs">{u.id}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-900">{u.label}</td>
+                  <td className="px-6 py-4 text-right text-slate-600 font-mono text-xs">{u.conversion_factor}</td>
+                  <td className="px-6 py-4 text-center text-slate-500">{u.order}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {u.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setModal({ mode: 'edit', id: u.id, label: u.label, conversion_factor: u.conversion_factor, order: u.order, active: u.active })} title="Edit unit" className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors">
+                        <PencilIcon />
+                      </button>
+                      <button onClick={() => setDeleteTarget(u)} title="Delete unit" className="p-2 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                        <CircleXIcon />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {units.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <p className="text-sm text-slate-400">No units configured. Click "+ Add Unit" to begin.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Crop Config Tab ───────────────────────────────────────────────────────────
 
 function CropConfigTab() {
@@ -708,6 +943,7 @@ function CropConfigTab() {
 const TABS: { key: Tab; label: string }[] = [
   { key: 'states',      label: 'States & Districts' },
   { key: 'occupations', label: 'Occupations' },
+  { key: 'landholding', label: 'Landholding Units' },
   { key: 'crops',       label: 'Crop Config' },
 ];
 
@@ -738,6 +974,7 @@ export default function MastersPage() {
 
       {tab === 'states'      && <StatesTab />}
       {tab === 'occupations' && <OccupationsTab />}
+      {tab === 'landholding' && <LandholdingTab />}
       {tab === 'crops'       && <CropConfigTab />}
     </div>
   );

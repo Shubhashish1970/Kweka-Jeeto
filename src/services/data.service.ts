@@ -1,6 +1,7 @@
 import * as farmerRepo from '../data/repositories/farmer.repository';
 import * as stateMasterRepo from '../data/repositories/stateMaster.repository';
 import * as occupationRepo from '../data/repositories/occupationMaster.repository';
+import * as landholdingUnitRepo from '../data/repositories/landholdingUnit.repository';
 import * as configRepo from '../data/repositories/config.repository';
 import * as auditRepo from '../data/repositories/audit.repository';
 import * as stateCropRepo from '../data/repositories/stateCrop.repository';
@@ -65,3 +66,11 @@ export const createOccupation = occupationRepo.createOccupation;
 export const updateOccupation = occupationRepo.updateOccupation;
 export const deleteOccupation = occupationRepo.deleteOccupation;
 export const seedOccupations = occupationRepo.seedOccupations;
+
+export const getAllLandholdingUnits = landholdingUnitRepo.getAllLandholdingUnits;
+export const getAllLandholdingUnitsAdmin = landholdingUnitRepo.getAllLandholdingUnitsAdmin;
+export const getLandholdingUnitById = landholdingUnitRepo.getLandholdingUnitById;
+export const createLandholdingUnit = landholdingUnitRepo.createLandholdingUnit;
+export const updateLandholdingUnit = landholdingUnitRepo.updateLandholdingUnit;
+export const deleteLandholdingUnit = landholdingUnitRepo.deleteLandholdingUnit;
+export const seedLandholdingUnits = landholdingUnitRepo.seedLandholdingUnits;

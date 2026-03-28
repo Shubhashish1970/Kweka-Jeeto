@@ -6,6 +6,7 @@
 import { getFarmerByWaId, upsertFarmer } from '../data/repositories/farmer.repository';
 import { getStateCrop } from '../data/repositories/stateCrop.repository';
 import { getDistrictsByState } from '../data/repositories/stateMaster.repository';
+import { getAllLandholdingUnits, getLandholdingUnitById } from '../data/repositories/landholdingUnit.repository';
 import { getConfigValue } from '../data/repositories/config.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
@@ -425,9 +426,11 @@ async function handleFarmerDetails(
   // Meta validates responses against the schema and rejects extra fields.
   const cropOptionsForFlow = cropOptions.map(({ id, title, description }) => ({ id, title, description }));
 
-  // Look up existing crop + advisory date to pre-fill CROP_SELECTION via Form init-values
+  // Look up existing data to pre-fill CROP_SELECTION via Form init-values
   let pfCrop = '';
   let pfAdvisoryDate = '';
+  let pfLandholdingValue = 0;
+  let pfLandholdingUnit = '';
   const waId = decodeWaIdFromFlowToken(flowToken);
   if (waId) {
     try {
@@ -437,11 +440,25 @@ async function handleFarmerDetails(
         if (existing.advisory_start_date) {
           pfAdvisoryDate = new Date(existing.advisory_start_date as Date).toISOString().split('T')[0];
         }
-        logger.info('Flow FARMER_DETAILS: prefill crop=%s date=%s for %s', pfCrop, pfAdvisoryDate, waId);
+        if (existing.landholding) {
+          pfLandholdingValue = existing.landholding.value || 0;
+          pfLandholdingUnit = existing.landholding.unit || '';
+        }
+        logger.info('Flow FARMER_DETAILS: prefill crop=%s date=%s landholding=%s%s for %s',
+          pfCrop, pfAdvisoryDate, pfLandholdingValue, pfLandholdingUnit, waId);
       }
     } catch (err) {
       logger.warn('Flow FARMER_DETAILS: could not fetch existing farmer for prefill:', err);
     }
+  }
+
+  // Load landholding unit options from DB (cached)
+  let landholdingUnitOptions: { id: string; title: string }[] = [];
+  try {
+    const units = await getAllLandholdingUnits();
+    landholdingUnitOptions = units.map((u) => ({ id: u.id, title: u.label }));
+  } catch (err) {
+    logger.warn('Flow FARMER_DETAILS: could not load landholding units:', err);
   }
 
   const lang: Language = validateLanguage(String(data.language ?? 'en'));
@@ -458,6 +475,7 @@ async function handleFarmerDetails(
       header_image_src: CROP_FIELD_IMAGE,
       crop_section_title: cropSectionTitle,
       crop_options: cropOptionsForFlow,
+      landholding_unit_options: landholdingUnitOptions,
       // Pass farmer details through to CROP_SELECTION so they're in the final payload
       farmer_name: data.farmer_name,
       age: data.age,
@@ -466,10 +484,11 @@ async function handleFarmerDetails(
       state_label: stateLabel,
       district: data.district,
       language: lang,
-      // Pre-fill existing crop and advisory date — only include when non-empty to avoid
-      // triggering immediate ! validation on required date field for new farmers.
+      // Pre-fill existing values — only include when non-empty/non-zero
       ...(pfCrop ? { pf_crop: pfCrop } : {}),
       ...(pfAdvisoryDate ? { pf_advisory_start_date: pfAdvisoryDate } : {}),
+      ...(pfLandholdingValue > 0 ? { pf_landholding_value: pfLandholdingValue } : {}),
+      ...(pfLandholdingUnit ? { pf_landholding_unit: pfLandholdingUnit } : {}),
     },
   };
 }
@@ -504,6 +523,25 @@ async function handleCropSelection(
     getLocalizedString(rawCompletionMsg, lang, 'flow_completion_message'), templateVars
   );
 
+  // Compute landholding in acres
+  const landholdingValue = Number(data.landholding_value ?? 0);
+  const landholdingUnitId = String(data.landholding_unit ?? '');
+  let landholding: { value: number; unit: string; acres: number } | undefined;
+  if (landholdingValue > 0 && landholdingUnitId) {
+    try {
+      const unitDoc = await getLandholdingUnitById(landholdingUnitId);
+      const factor = unitDoc?.conversion_factor ?? 1;
+      landholding = {
+        value: landholdingValue,
+        unit: landholdingUnitId,
+        acres: Math.round(landholdingValue * factor * 1000) / 1000,
+      };
+      logger.info('Flow CROP_SELECTION: landholding %s %s = %s acres', landholdingValue, landholdingUnitId, landholding.acres);
+    } catch (err) {
+      logger.warn('Flow CROP_SELECTION: could not compute landholding acres:', err);
+    }
+  }
+
   if (waId) {
     try {
       await upsertFarmer({
@@ -514,6 +552,7 @@ async function handleCropSelection(
         state: String(data.state ?? '').toLowerCase().replace(/ /g, '_'),
         district: String(data.district ?? ''),
         crop: cropId,
+        landholding,
         advisory_start_date: advisoryDate,
         flow_token: flowToken,
         language: lang,

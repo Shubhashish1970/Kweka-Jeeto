@@ -1,4 +1,4 @@
-import { Farmer, IFarmer } from '../models/Farmer';
+import { Farmer, IFarmer, ILandholding } from '../models/Farmer';
 
 export interface FarmerFilter {
   state?: string;
@@ -21,6 +21,7 @@ export interface CreateFarmerData {
   state: string;
   district: string;
   crop: string;
+  landholding?: ILandholding;
   advisory_start_date?: Date;
   flow_token?: string;
   language?: string;
