@@ -123,6 +123,7 @@ const DEFAULT_CONFIG: Record<string, string> = {
   flow_header: 'কৃষি সলাহ / Agri Advisory',
   flow_body: 'Register to get crop advisory.',
   whatsapp_phone_number_id: '',
+  whatsapp_flow_id: '',
 };
 
 const ALL_CONFIG_KEYS = [
@@ -131,6 +132,7 @@ const ALL_CONFIG_KEYS = [
   'flow_header',
   'flow_body',
   'whatsapp_phone_number_id',
+  'whatsapp_flow_id',
 ];
 
 // ---------------------------------------------------------------------------
@@ -330,6 +332,12 @@ const SECTIONS: SectionDef[] = [
         label: 'Phone Number ID',
         type: 'text',
         hint: "Meta's ID for your WhatsApp Business phone number. Leave blank to use the environment variable.",
+      },
+      {
+        key: 'whatsapp_flow_id',
+        label: 'Flow ID',
+        type: 'text',
+        hint: "WhatsApp Flow ID sent to farmers. Update this after running the 'Update Flow JSON' GitHub Action — copy the new FLOW_ID from the action logs.",
       },
     ],
   },
