@@ -68,7 +68,7 @@ const run = async () => {
 
   // Step 3: Upload new flow JSON via assets API
   const form = new FormData();
-  form.append('name', 'farmer-registration.json');
+  form.append('name', 'flow.json');
   form.append('asset_type', 'FLOW_JSON');
   form.append('file', Buffer.from(flowJson, 'utf-8'), {
     filename: 'farmer-registration.json',
