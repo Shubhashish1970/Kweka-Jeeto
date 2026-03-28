@@ -84,9 +84,12 @@
             "type": "Footer",
             "label": "${data.button_label}",
             "on-click-action": {
-              "name": "data_exchange",
+              "name": "navigate",
+              "next": {
+                "type": "screen",
+                "name": "FARMER_DETAILS"
+              },
               "payload": {
-                "action_type": "welcome_button",
                 "pf_farmer_name": "${data.pf_farmer_name}",
                 "pf_age": "${data.pf_age}",
                 "pf_profession": "${data.pf_profession}",
@@ -146,26 +149,6 @@
               "title": "Guntur"
             }
           ]
-        },
-        "occupation_options": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              }
-            }
-          },
-          "__example__": [
-            {
-              "id": "farmer",
-              "title": "Farmer"
-            }
-          ]
         }
       },
       "layout": {
@@ -212,7 +195,32 @@
                 "name": "profession",
                 "label": "Occupation",
                 "required": true,
-                "data-source": "${data.occupation_options}",
+                "data-source": [
+                  {
+                    "id": "farmer",
+                    "title": "Farmer"
+                  },
+                  {
+                    "id": "farm_owner",
+                    "title": "Farm Owner"
+                  },
+                  {
+                    "id": "agronomist",
+                    "title": "Agronomist"
+                  },
+                  {
+                    "id": "agri_labourer",
+                    "title": "Agricultural Labourer"
+                  },
+                  {
+                    "id": "trader",
+                    "title": "Trader"
+                  },
+                  {
+                    "id": "other",
+                    "title": "Other"
+                  }
+                ],
                 "init-value": "${data.pf_profession}"
               },
               {
