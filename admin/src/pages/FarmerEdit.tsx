@@ -19,7 +19,14 @@ interface Farmer {
   district: string;
   crop: string;
   advisory_start_date?: string;
+  landholding?: { value: number; unit: string; acres: number };
   createdAt: string;
+}
+
+interface LandholdingUnit {
+  id: string;
+  label: string;
+  conversion_factor: number;
 }
 
 const STATE_OPTIONS = [
@@ -90,6 +97,10 @@ export default function FarmerEdit() {
     crop: '',
     advisory_start_date: '',
   });
+  const [landholdingValue, setLandholdingValue] = useState('');
+  const [landholdingUnit, setLandholdingUnit] = useState('');
+  const [landholdingAcres, setLandholdingAcres] = useState('');
+  const [unitOptions, setUnitOptions] = useState<LandholdingUnit[]>([]);
   const [waId, setWaId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,8 +110,12 @@ export default function FarmerEdit() {
 
   useEffect(() => {
     if (!id) return;
-    api.get<{ farmers: Farmer[]; total: number }>(`/farmers?limit=1000`).then((r) => {
-      const farmer = r.farmers.find((f) => f._id === id);
+    Promise.all([
+      api.get<{ farmers: Farmer[]; total: number }>(`/farmers?limit=1000`),
+      api.get<LandholdingUnit[]>('/masters/landholding-units'),
+    ]).then(([farmersRes, units]) => {
+      setUnitOptions(units.filter((u: LandholdingUnit & { active?: boolean }) => u.active !== false));
+      const farmer = farmersRes.farmers.find((f) => f._id === id);
       if (farmer) {
         setWaId(farmer.wa_id);
         setForm({
@@ -114,9 +129,23 @@ export default function FarmerEdit() {
             ? new Date(farmer.advisory_start_date).toISOString().split('T')[0]
             : '',
         });
+        if (farmer.landholding) {
+          setLandholdingValue(String(farmer.landholding.value));
+          setLandholdingUnit(farmer.landholding.unit);
+          setLandholdingAcres(String(farmer.landholding.acres));
+        }
       }
     }).finally(() => setLoading(false));
   }, [id]);
+
+  // Auto-recompute acres when value or unit changes
+  useEffect(() => {
+    const val = parseFloat(landholdingValue);
+    if (!val || !landholdingUnit) { setLandholdingAcres(''); return; }
+    const unit = unitOptions.find((u) => u.id === landholdingUnit);
+    if (!unit) { setLandholdingAcres(''); return; }
+    setLandholdingAcres(String(Math.round(val * unit.conversion_factor * 1000) / 1000));
+  }, [landholdingValue, landholdingUnit, unitOptions]);
 
   const handleChange = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -125,7 +154,13 @@ export default function FarmerEdit() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put(`/farmers/${id}`, form);
+      const val = parseFloat(landholdingValue);
+      const acres = parseFloat(landholdingAcres);
+      const landholding =
+        val > 0 && landholdingUnit && acres > 0
+          ? { value: val, unit: landholdingUnit, acres }
+          : null;
+      await api.put(`/farmers/${id}`, { ...form, landholding });
       setToast({ type: 'success', message: 'Farmer updated successfully.' });
       setTimeout(() => navigate('/farmers'), 1200);
     } catch {
@@ -302,6 +337,43 @@ export default function FarmerEdit() {
                   onChange={(e) => handleChange('advisory_start_date', e.target.value)}
                 />
                 <p className="text-xs text-slate-400 mt-1">When daily advisory messages begin</p>
+              </div>
+              <div>
+                <label className={labelCls}>Landholding</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step="any"
+                    className={`h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-24`}
+                    placeholder="Value"
+                    value={landholdingValue}
+                    onChange={(e) => setLandholdingValue(e.target.value)}
+                  />
+                  <select
+                    className={`h-10 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary flex-1`}
+                    value={landholdingUnit}
+                    onChange={(e) => setLandholdingUnit(e.target.value)}
+                  >
+                    <option value="">Select unit</option>
+                    {unitOptions.map((u) => (
+                      <option key={u.id} value={u.id}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Landholding in Acres</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  className={`${inputCls} bg-slate-50`}
+                  placeholder="Auto-computed"
+                  value={landholdingAcres}
+                  onChange={(e) => setLandholdingAcres(e.target.value)}
+                />
+                <p className="text-xs text-slate-400 mt-1">Auto-computed from value × unit; editable if needed</p>
               </div>
             </div>
           </div>

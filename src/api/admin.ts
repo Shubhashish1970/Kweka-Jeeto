@@ -83,10 +83,11 @@ adminRouter.get('/farmers', verifyAuth, async (req: Request, res: Response) => {
 
 adminRouter.put('/farmers/:id', verifyAuth, async (req: Request, res: Response) => {
   try {
-    const { farmer_name, age, profession, state, district, crop, advisory_start_date } = req.body;
+    const { farmer_name, age, profession, state, district, crop, advisory_start_date, landholding } = req.body;
     const updated = await dataService.updateFarmer(req.params.id, {
       farmer_name, age, profession, state, district, crop,
       advisory_start_date: advisory_start_date ? new Date(advisory_start_date) : undefined,
+      landholding: landholding ?? undefined,
     });
     if (!updated) {
       res.status(404).json({ error: 'Farmer not found' });
