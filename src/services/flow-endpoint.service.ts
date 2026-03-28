@@ -378,20 +378,29 @@ async function handleWelcomeButton(
     }
   }
 
-  return {
-    screen: 'FARMER_DETAILS',
-    data: {
-      occupation_options: occupationOptions,
-      district_options: districtOptions,
-      // Echo returning farmer pre-fill data (used as init-values for dropdowns)
-      pf_farmer_name: String(data.pf_farmer_name ?? ''),
-      pf_age: Number(data.pf_age ?? 0) || 0,
-      pf_profession: String(data.pf_profession ?? ''),
-      pf_state: pfState,
-      pf_district: String(data.pf_district ?? ''),
-      pf_language: String(data.pf_language ?? 'en'),
-    },
+  // WhatsApp Flows auto-maps pf_* data keys to field init-values (strips pf_ prefix).
+  // Only include non-empty/non-zero values — empty string on a required dropdown triggers
+  // immediate validation error ("Enter State" in red), and 0 on a number field shows 0.
+  const pfFarmerName = String(data.pf_farmer_name ?? '');
+  const pfAge = Number(data.pf_age ?? 0);
+  const pfProfession = String(data.pf_profession ?? '');
+  const pfDistrict = String(data.pf_district ?? '');
+  const pfLanguage = String(data.pf_language ?? 'en') || 'en';
+
+  const responseData: Record<string, unknown> = {
+    occupation_options: occupationOptions,
+    district_options: districtOptions,
+    pf_language: pfLanguage,  // always set — defaults new farmers to English
   };
+
+  // Only include prefill values when meaningful (returning farmers)
+  if (pfFarmerName) responseData.pf_farmer_name = pfFarmerName;
+  if (pfAge > 0)    responseData.pf_age = pfAge;
+  if (pfProfession) responseData.pf_profession = pfProfession;
+  if (pfState)      responseData.pf_state = pfState;
+  if (pfDistrict)   responseData.pf_district = pfDistrict;
+
+  return { screen: 'FARMER_DETAILS', data: responseData };
 }
 
 // Called when the user selects a state in FARMER_DETAILS — returns district options
