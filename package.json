@@ -13,6 +13,7 @@
     "deploy:flow": "ts-node scripts/deploy-flow.ts",
     "generate:keys": "ts-node scripts/generate-keys.ts",
     "upload:public-key": "ts-node scripts/upload-public-key.ts",
+    "update:flow": "ts-node scripts/update-flow.ts",
     "publish:flow": "ts-node scripts/publish-flow.ts",
     "cleanup:flows": "ts-node scripts/cleanup-flows.ts",
     "encode:images": "ts-node scripts/encode-images.ts",
