@@ -10,7 +10,7 @@ import { cronRouter } from './api/cron';
 import { flowEndpointRouter } from './api/flow-endpoint';
 import { env } from './config/env';
 import { logger } from './utils/logger';
-import { seedStateCrops, seedStateMasters } from './services/data.service';
+import { seedStateCrops, seedStateMasters, seedOccupations } from './services/data.service';
 import { STATE_CROPS, STATE_LABELS } from './services/flow-endpoint.service';
 
 const app = express();
@@ -55,6 +55,8 @@ const server = app.listen(env.port, '0.0.0.0', () => {
       logger.info('State crops seeded (%d states)', seedData.length);
       await seedStateMasters();
       logger.info('State masters seeded');
+      await seedOccupations();
+      logger.info('Occupations seeded');
     })
     .catch((err) => {
       logger.error('MongoDB connect failed (server still up):', err);

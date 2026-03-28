@@ -24,7 +24,14 @@ interface StateCropSummary {
   crops: { id: string; title: string; description: string }[];
 }
 
-type Tab = 'states' | 'crops';
+interface OccupationMaster {
+  id: string;
+  label: string;
+  active: boolean;
+  order: number;
+}
+
+type Tab = 'states' | 'occupations' | 'crops';
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 
@@ -403,6 +410,231 @@ function StatesTab() {
   );
 }
 
+// ── Occupations Tab ───────────────────────────────────────────────────────────
+
+interface OccupationModalProps {
+  mode: 'add' | 'edit';
+  id: string;
+  label: string;
+  order: number;
+  active: boolean;
+  saving: boolean;
+  onChangeId: (v: string) => void;
+  onChangeLabel: (v: string) => void;
+  onChangeOrder: (v: number) => void;
+  onChangeActive: (v: boolean) => void;
+  onSave: () => void;
+  onClose: () => void;
+}
+
+function OccupationModal({ mode, id, label, order, active, saving, onChangeId, onChangeLabel, onChangeOrder, onChangeActive, onSave, onClose }: OccupationModalProps) {
+  const firstRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { firstRef.current?.focus(); }, []);
+  const valid = id.trim() && label.trim();
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-100">
+          <h2 className="text-lg font-bold text-slate-900">{mode === 'add' ? 'Add Occupation' : 'Edit Occupation'}</h2>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Occupation ID (slug)</label>
+            <input ref={firstRef} className={inputCls + (mode === 'edit' ? ' bg-slate-50 text-slate-400 cursor-not-allowed' : '')} placeholder="e.g. farmer" value={id} disabled={mode === 'edit'} onChange={(e) => onChangeId(e.target.value.toLowerCase().replace(/\s+/g, '_'))} />
+            {mode === 'edit' && <p className="text-xs text-slate-400 mt-1">ID cannot be changed.</p>}
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Label</label>
+            <input className={inputCls} placeholder="e.g. Farmer" value={label} onChange={(e) => onChangeLabel(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Display Order</label>
+              <input type="number" className={inputCls} value={order} min={0} onChange={(e) => onChangeOrder(Number(e.target.value))} />
+            </div>
+            <div className="flex items-center gap-2 pt-5">
+              <input type="checkbox" id="occ-active" checked={active} onChange={(e) => onChangeActive(e.target.checked)} className="w-4 h-4 rounded accent-primary" />
+              <label htmlFor="occ-active" className="text-sm font-medium text-slate-700">Active</label>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="primary" onClick={onSave} disabled={saving || !valid}>
+            {saving ? 'Saving…' : mode === 'add' ? 'Add Occupation' : 'Save Changes'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OccupationsTab() {
+  const [occupations, setOccupations] = useState<OccupationMaster[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const [modal, setModal] = useState<{ mode: 'add' | 'edit'; id: string; label: string; order: number; active: boolean } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<OccupationMaster | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    api.get<OccupationMaster[]>('/masters/occupations')
+      .then((docs) => setOccupations(docs.sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))))
+      .catch(() => setToast({ type: 'error', message: 'Failed to load occupations.' }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!modal) return;
+    setSaving(true);
+    try {
+      if (modal.mode === 'add') {
+        const created = await api.post<OccupationMaster>('/masters/occupations', { id: modal.id, label: modal.label, order: modal.order });
+        setOccupations((prev) => [...prev, created].sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)));
+        setToast({ type: 'success', message: 'Occupation added.' });
+      } else {
+        const updated = await api.put<OccupationMaster>(`/masters/occupations/${modal.id}`, { label: modal.label, order: modal.order, active: modal.active });
+        setOccupations((prev) => prev.map((o) => o.id === modal.id ? updated : o).sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)));
+        setToast({ type: 'success', message: 'Occupation updated.' });
+      }
+      setModal(null);
+    } catch {
+      setToast({ type: 'error', message: `Failed to ${modal.mode} occupation.` });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/masters/occupations/${deleteTarget.id}`);
+      setOccupations((prev) => prev.filter((o) => o.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setToast({ type: 'success', message: 'Occupation deleted.' });
+    } catch {
+      setToast({ type: 'error', message: 'Failed to delete occupation.' });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 py-8 text-sm text-slate-500">
+        <svg className="w-4 h-4 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+        Loading occupations…
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+
+      {modal && (
+        <OccupationModal
+          mode={modal.mode}
+          id={modal.id}
+          label={modal.label}
+          order={modal.order}
+          active={modal.active}
+          saving={saving}
+          onChangeId={(v) => setModal((m) => m && { ...m, id: v })}
+          onChangeLabel={(v) => setModal((m) => m && { ...m, label: v })}
+          onChangeOrder={(v) => setModal((m) => m && { ...m, order: v })}
+          onChangeActive={(v) => setModal((m) => m && { ...m, active: v })}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Occupation"
+        message={`Delete "${deleteTarget?.label}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <div className="bg-white rounded-2xl border border-slate-200 border-l-4 border-l-primary shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Occupations</h2>
+            <p className="text-sm text-slate-500 mt-0.5">Manage occupation options shown in the WhatsApp registration flow.</p>
+          </div>
+          <Button variant="primary" onClick={() => setModal({ mode: 'add', id: '', label: '', order: occupations.length + 1, active: true })}>
+            + Add Occupation
+          </Button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider w-40">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Label</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">Order</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-32">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {occupations.map((o) => (
+                <tr key={o.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="px-6 py-4 font-mono text-slate-500 text-xs">{o.id}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-900">{o.label}</td>
+                  <td className="px-6 py-4 text-center text-slate-500">{o.order}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${o.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {o.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setModal({ mode: 'edit', id: o.id, label: o.label, order: o.order, active: o.active })}
+                        title="Edit occupation"
+                        className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(o)}
+                        title="Delete occupation"
+                        className="p-2 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <CircleXIcon />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {occupations.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <p className="text-sm text-slate-400">No occupations configured. Click "+ Add Occupation" to begin.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Crop Config Tab ───────────────────────────────────────────────────────────
 
 function CropConfigTab() {
@@ -474,8 +706,9 @@ function CropConfigTab() {
 // ── Masters Page ──────────────────────────────────────────────────────────────
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'states', label: 'States & Districts' },
-  { key: 'crops',  label: 'Crop Config' },
+  { key: 'states',      label: 'States & Districts' },
+  { key: 'occupations', label: 'Occupations' },
+  { key: 'crops',       label: 'Crop Config' },
 ];
 
 export default function MastersPage() {
@@ -503,8 +736,9 @@ export default function MastersPage() {
         ))}
       </div>
 
-      {tab === 'states' && <StatesTab />}
-      {tab === 'crops'  && <CropConfigTab />}
+      {tab === 'states'      && <StatesTab />}
+      {tab === 'occupations' && <OccupationsTab />}
+      {tab === 'crops'       && <CropConfigTab />}
     </div>
   );
 }

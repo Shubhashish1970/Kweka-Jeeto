@@ -56,26 +56,6 @@
         "pf_language": {
           "type": "string",
           "__example__": "en"
-        },
-        "pf_district_options": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              }
-            }
-          },
-          "__example__": [
-            {
-              "id": "guntur",
-              "title": "Guntur"
-            }
-          ]
         }
       },
       "layout": {
@@ -104,19 +84,15 @@
             "type": "Footer",
             "label": "${data.button_label}",
             "on-click-action": {
-              "name": "navigate",
-              "next": {
-                "type": "screen",
-                "name": "FARMER_DETAILS"
-              },
+              "name": "data_exchange",
               "payload": {
+                "action_type": "welcome_button",
                 "pf_farmer_name": "${data.pf_farmer_name}",
                 "pf_age": "${data.pf_age}",
                 "pf_profession": "${data.pf_profession}",
                 "pf_state": "${data.pf_state}",
                 "pf_district": "${data.pf_district}",
-                "pf_language": "${data.pf_language}",
-                "district_options": "${data.pf_district_options}"
+                "pf_language": "${data.pf_language}"
               }
             }
           }
@@ -170,6 +146,26 @@
               "title": "Guntur"
             }
           ]
+        },
+        "occupation_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          },
+          "__example__": [
+            {
+              "id": "farmer",
+              "title": "Farmer"
+            }
+          ]
         }
       },
       "layout": {
@@ -211,12 +207,11 @@
                 "helper-text": "Your age in years"
               },
               {
-                "type": "TextInput",
+                "type": "Dropdown",
                 "name": "profession",
                 "label": "Occupation",
                 "required": true,
-                "input-type": "text",
-                "helper-text": "e.g. Farmer, Agronomist, Trader"
+                "data-source": "${data.occupation_options}"
               },
               {
                 "type": "Dropdown",

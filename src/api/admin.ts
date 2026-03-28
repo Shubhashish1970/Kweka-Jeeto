@@ -411,3 +411,63 @@ adminRouter.put('/masters/states/:state/districts', verifyAuth, async (req: Requ
     res.status(500).json({ error: 'Failed to replace districts' });
   }
 });
+
+// ─── Occupation Masters ───────────────────────────────────────────────────────
+
+adminRouter.get('/masters/occupations', verifyAuth, async (_req: Request, res: Response) => {
+  try {
+    const docs = await dataService.getAllOccupationsAdmin();
+    res.json(docs);
+  } catch (err) {
+    logger.error('Get occupations error:', err);
+    res.status(500).json({ error: 'Failed to get occupations' });
+  }
+});
+
+adminRouter.post('/masters/occupations', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { id, label, order } = req.body;
+    if (!id || !label) {
+      res.status(400).json({ error: 'id and label required' });
+      return;
+    }
+    const doc = await dataService.createOccupation(String(id), String(label), Number(order ?? 0));
+    res.status(201).json(doc);
+  } catch (err) {
+    logger.error('Create occupation error:', err);
+    res.status(500).json({ error: 'Failed to create occupation' });
+  }
+});
+
+adminRouter.put('/masters/occupations/:id', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { label, active, order } = req.body;
+    const updates: Record<string, unknown> = {};
+    if (label !== undefined) updates.label = String(label);
+    if (active !== undefined) updates.active = Boolean(active);
+    if (order !== undefined) updates.order = Number(order);
+    const doc = await dataService.updateOccupation(req.params.id, updates);
+    if (!doc) {
+      res.status(404).json({ error: 'Occupation not found' });
+      return;
+    }
+    res.json(doc);
+  } catch (err) {
+    logger.error('Update occupation error:', err);
+    res.status(500).json({ error: 'Failed to update occupation' });
+  }
+});
+
+adminRouter.delete('/masters/occupations/:id', verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const deleted = await dataService.deleteOccupation(req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: 'Occupation not found' });
+      return;
+    }
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Delete occupation error:', err);
+    res.status(500).json({ error: 'Failed to delete occupation' });
+  }
+});

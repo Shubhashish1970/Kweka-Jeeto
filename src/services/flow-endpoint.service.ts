@@ -6,6 +6,7 @@
 import { getFarmerByWaId, upsertFarmer } from '../data/repositories/farmer.repository';
 import { getStateCrop } from '../data/repositories/stateCrop.repository';
 import { getDistrictsByState } from '../data/repositories/stateMaster.repository';
+import { getAllOccupations } from '../data/repositories/occupationMaster.repository';
 import { getConfigValue } from '../data/repositories/config.repository';
 import { sendTextMessage } from './message.service';
 import { logger } from '../utils/logger';
@@ -246,6 +247,12 @@ export const getNextScreen = async (
 
   if (action === 'data_exchange') {
     switch (screen) {
+      case 'WELCOME':
+        // WELCOME button click → load FARMER_DETAILS with occupation + district options
+        if (String(data.action_type ?? '') === 'welcome_button') {
+          return handleWelcomeButton(data);
+        }
+        break;
       case 'FARMER_DETAILS':
         // Differentiate state-change (on-select-action) from form submit (Continue)
         if (String(data.action_type ?? '') === 'state_change') {
@@ -255,9 +262,10 @@ export const getNextScreen = async (
       case 'CROP_SELECTION':
         return handleCropSelection(data, flowToken);
       default:
-        logger.warn('Flow endpoint: unknown screen in data_exchange:', screen);
-        return { data: { acknowledged: true } };
+        break;
     }
+    logger.warn('Flow endpoint: unknown screen/action_type in data_exchange: screen=%s action_type=%s', screen, data.action_type);
+    return { data: { acknowledged: true } };
   }
 
   logger.warn('Flow endpoint: unhandled action:', action);
@@ -294,16 +302,6 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
         logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, 'crop:', existing.crop);
         const cropName = cropLabel(existing.crop);
         const vars = { name: existing.farmer_name, crop: cropName };
-        // Pre-load district options for returning farmer's saved state
-        let pfDistrictOptions: { id: string; title: string }[] = [];
-        if (existing.state) {
-          try {
-            const districts = await getDistrictsByState(existing.state);
-            pfDistrictOptions = districts.map((d) => ({ id: d, title: d }));
-          } catch (err) {
-            logger.warn('Flow INIT: could not load districts for state:', existing.state, err);
-          }
-        }
         return {
           screen: 'WELCOME',
           data: {
@@ -315,13 +313,12 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
               getLocalizedString(rawReturningBody, lang, 'flow_returning_body'), vars
             ),
             button_label: getLocalizedString(rawReturningButton, lang, 'flow_returning_button_label'),
-            // Pre-fill data passed via navigate payload → FARMER_DETAILS Form init-values
+            // Pass returning farmer data via WELCOME payload → welcome_button handler → FARMER_DETAILS
             pf_farmer_name: existing.farmer_name || '',
             pf_age: parseInt(existing.age) || 0,
             pf_profession: existing.profession || '',
             pf_state: existing.state || '',
             pf_district: existing.district || '',
-            pf_district_options: pfDistrictOptions,
             pf_language: lang,
           },
         };
@@ -340,14 +337,59 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
       welcome_title: getLocalizedString(rawWelcomeTitle, lang, 'flow_welcome_title'),
       welcome_body: getLocalizedString(rawWelcomeBody, lang, 'flow_welcome_body'),
       button_label: getLocalizedString(rawWelcomeButton, lang, 'flow_welcome_button_label'),
-      // Prefill for new farmers — only non-text fields to avoid triggering
-      // WhatsApp's required-field validation on first render (empty string init-values
-      // on required TextInput show the ! error immediately on load).
+      // No pf_* prefill for new farmers — avoids ! validation errors on empty required fields.
+      // welcome_button data_exchange handler will return FARMER_DETAILS with occupation_options.
+      pf_farmer_name: '',
       pf_age: 0,
+      pf_profession: '',
       pf_state: '',
       pf_district: '',
-      pf_district_options: [],
       pf_language: lang,
+    },
+  };
+}
+
+// Called when the WELCOME button is clicked — loads FARMER_DETAILS with occupation options
+// (and pre-loaded district options for returning farmers who have a saved state).
+async function handleWelcomeButton(
+  data: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const pfState = String(data.pf_state ?? '').toLowerCase().replace(/ /g, '_');
+  logger.info('Flow WELCOME_BUTTON: pf_state=%s', pfState || '(new farmer)');
+
+  // Fetch occupation options from DB (cached)
+  let occupationOptions: { id: string; title: string }[] = [];
+  try {
+    const occs = await getAllOccupations();
+    occupationOptions = occs.map((o) => ({ id: o.id, title: o.label }));
+  } catch (err) {
+    logger.warn('Flow WELCOME_BUTTON: could not load occupations:', err);
+  }
+
+  // For returning farmers — pre-load their state's districts so the district dropdown
+  // is populated immediately without requiring a state re-selection.
+  let districtOptions: { id: string; title: string }[] = [];
+  if (pfState) {
+    try {
+      const districts = await getDistrictsByState(pfState);
+      districtOptions = districts.map((d) => ({ id: d, title: d }));
+    } catch (err) {
+      logger.warn('Flow WELCOME_BUTTON: could not load districts for state:', pfState, err);
+    }
+  }
+
+  return {
+    screen: 'FARMER_DETAILS',
+    data: {
+      occupation_options: occupationOptions,
+      district_options: districtOptions,
+      // Echo returning farmer pre-fill data (used as init-values for dropdowns)
+      pf_farmer_name: String(data.pf_farmer_name ?? ''),
+      pf_age: Number(data.pf_age ?? 0) || 0,
+      pf_profession: String(data.pf_profession ?? ''),
+      pf_state: pfState,
+      pf_district: String(data.pf_district ?? ''),
+      pf_language: String(data.pf_language ?? 'en'),
     },
   };
 }
@@ -360,18 +402,25 @@ async function handleStateChange(
   const state = String(data.state ?? '').toLowerCase().replace(/ /g, '_');
   logger.info('Flow STATE_CHANGE: state=%s', state);
 
+  // Fetch districts and occupations in parallel
   let districtOptions: { id: string; title: string }[] = [];
+  let occupationOptions: { id: string; title: string }[] = [];
   try {
-    const districts = await getDistrictsByState(state);
+    const [districts, occs] = await Promise.all([
+      getDistrictsByState(state),
+      getAllOccupations(),
+    ]);
     districtOptions = districts.map((d) => ({ id: d, title: d }));
+    occupationOptions = occs.map((o) => ({ id: o.id, title: o.label }));
   } catch (err) {
-    logger.warn('Flow STATE_CHANGE: could not load districts for state:', state, err);
+    logger.warn('Flow STATE_CHANGE: could not load districts/occupations for state:', state, err);
   }
 
   return {
     screen: 'FARMER_DETAILS',
     data: {
       district_options: districtOptions,
+      occupation_options: occupationOptions,
       // Must echo pf_state back — without it, WhatsApp re-applies init-values
       // and ${data.pf_state} resolves to empty, wiping the selected state.
       pf_state: state,

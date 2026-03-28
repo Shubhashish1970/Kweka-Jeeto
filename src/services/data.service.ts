@@ -1,5 +1,6 @@
 import * as farmerRepo from '../data/repositories/farmer.repository';
 import * as stateMasterRepo from '../data/repositories/stateMaster.repository';
+import * as occupationRepo from '../data/repositories/occupationMaster.repository';
 import * as configRepo from '../data/repositories/config.repository';
 import * as auditRepo from '../data/repositories/audit.repository';
 import * as stateCropRepo from '../data/repositories/stateCrop.repository';
@@ -57,3 +58,10 @@ export const addDistrict = stateMasterRepo.addDistrict;
 export const removeDistrict = stateMasterRepo.removeDistrict;
 export const replaceDistricts = stateMasterRepo.replaceDistricts;
 export const seedStateMasters = stateMasterRepo.seedStateMasters;
+
+export const getAllOccupations = occupationRepo.getAllOccupations;
+export const getAllOccupationsAdmin = occupationRepo.getAllOccupationsAdmin;
+export const createOccupation = occupationRepo.createOccupation;
+export const updateOccupation = occupationRepo.updateOccupation;
+export const deleteOccupation = occupationRepo.deleteOccupation;
+export const seedOccupations = occupationRepo.seedOccupations;
