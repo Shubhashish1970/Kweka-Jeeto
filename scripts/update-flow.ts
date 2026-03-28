@@ -1,130 +1,152 @@
 /**
- * Update an existing WhatsApp Flow's JSON asset without creating a new flow.
- * Use this whenever the flow JSON changes (screens, fields, logic).
- * Requires the flow to be in DRAFT state first (it re-deprecates a published flow).
+ * Create and publish a new WhatsApp Flow with the latest farmer-registration.json.
+ * Meta does not support in-place JSON updates for published flows — a new flow is always created.
+ *
+ * After this script runs:
+ *   1. Copy the printed FLOW_ID
+ *   2. Go to Admin Portal → Config → set whatsapp_flow_id = <new FLOW_ID>
+ *   No backend redeploy needed (whatsapp_flow_id is read from DB at runtime).
  *
  * Usage: npm run update:flow
- * Requires: FLOW_ID and WHATSAPP_ACCESS_TOKEN in env / GitHub Secrets
- *
- * Meta API: POST /{flow-id}/assets  (multipart/form-data)
+ * Requires: WHATSAPP_ACCESS_TOKEN, WABA_ID (or WHATSAPP_PHONE_NUMBER_ID), FLOW_ENDPOINT_URI
  */
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
-import FormData from 'form-data';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const FLOW_ID = process.env.FLOW_ID;
+function randomFlowSuffix(): string {
+  const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+  const bytes = crypto.randomBytes(6);
+  return Array.from(bytes, (b) => chars[b % 36]).join('');
+}
+
+const WABA_ID = process.env.WABA_ID;
+const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const GRAPH_API = 'https://graph.facebook.com/v21.0';
 
-if (!FLOW_ID) {
-  console.error('Missing FLOW_ID env var. Set it to the existing flow ID in GitHub Secrets.');
-  process.exit(1);
-}
-if (!ACCESS_TOKEN) {
-  console.error('Missing WHATSAPP_ACCESS_TOKEN env var.');
-  process.exit(1);
-}
+if (!ACCESS_TOKEN) { console.error('Missing WHATSAPP_ACCESS_TOKEN'); process.exit(1); }
+if (!WABA_ID && !PHONE_NUMBER_ID) { console.error('Missing WABA_ID or WHATSAPP_PHONE_NUMBER_ID'); process.exit(1); }
 
 const flowPath = path.join(__dirname, '../flows/farmer-registration.json');
 const flowJson = fs.readFileSync(flowPath, 'utf-8');
 
+/** Collect WABA IDs from me?fields=businesses. */
+async function resolveWabaFromToken(headers: Record<string, string>): Promise<string[]> {
+  const catchResponse = (e: { response?: { status?: number; data?: unknown } }) => e.response;
+  const meRes = await axios.get(
+    `${GRAPH_API}/me?fields=businesses{owned_whatsapp_business_accounts{id},client_whatsapp_business_accounts{id}}`,
+    { headers }
+  ).catch(catchResponse);
+  if (!meRes || meRes.status !== 200) return [];
+  const raw = meRes.data as { businesses?: { data?: Array<{ owned_whatsapp_business_accounts?: { data?: Array<{ id: string }> }; client_whatsapp_business_accounts?: { data?: Array<{ id: string }> } }> } };
+  const businesses = Array.isArray(raw?.businesses?.data) ? raw.businesses!.data! : [];
+  const wabaIds = new Set<string>();
+  for (const biz of businesses) {
+    for (const w of biz?.owned_whatsapp_business_accounts?.data ?? []) if (w?.id) wabaIds.add(w.id);
+    for (const w of biz?.client_whatsapp_business_accounts?.data ?? []) if (w?.id) wabaIds.add(w.id);
+  }
+  return Array.from(wabaIds);
+}
+
+async function getPhoneNumberIdsForWaba(wabaId: string, headers: Record<string, string>): Promise<string[]> {
+  const res = await axios.get(`${GRAPH_API}/${wabaId}/phone_numbers?fields=id`, { headers }).catch(() => null);
+  if (!res || res.status !== 200) return [];
+  const data = (res.data as { data?: Array<{ id: string }> })?.data;
+  return Array.isArray(data) ? data.map((p) => p.id).filter(Boolean) : [];
+}
+
 const run = async () => {
-  const authHeaders = { Authorization: `Bearer ${ACCESS_TOKEN}` };
+  const headers = { Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/json' };
+  const catchResponse = (e: { response?: { status?: number; data?: unknown } }) => e.response;
 
-  // Step 1: Check current flow status
-  console.log(`Checking flow ${FLOW_ID} status...`);
-  const detailsRes = await axios.get(
-    `${GRAPH_API}/${FLOW_ID}?fields=status,validation_errors,name`,
-    { headers: authHeaders }
-  ).catch((e: { response?: { status?: number; data?: unknown } }) => e.response);
+  // Resolve WABA ID
+  let effectiveWabaId: string | null = WABA_ID || null;
+  if (!effectiveWabaId) {
+    console.log('Resolving WABA from token...');
+    const wabaIds = await resolveWabaFromToken(headers);
+    if (wabaIds.length === 0) { console.error('Could not resolve WABA. Set WABA_ID in GitHub Secrets.'); process.exit(1); }
+    if (wabaIds.length === 1) {
+      effectiveWabaId = wabaIds[0];
+    } else if (PHONE_NUMBER_ID) {
+      for (const wabaId of wabaIds) {
+        if ((await getPhoneNumberIdsForWaba(wabaId, headers)).includes(PHONE_NUMBER_ID)) {
+          effectiveWabaId = wabaId;
+          break;
+        }
+      }
+      if (!effectiveWabaId) { console.error('Multiple WABAs found; set WABA_ID in GitHub Secrets.'); process.exit(1); }
+    } else {
+      effectiveWabaId = wabaIds[0];
+    }
+    console.log('WABA resolved:', effectiveWabaId);
+  }
 
-  if (!detailsRes || detailsRes.status !== 200) {
-    console.error('Could not fetch flow details:', JSON.stringify(detailsRes?.data ?? 'No response', null, 2));
+  const endpointUri = process.env.FLOW_ENDPOINT_URI || '';
+  const flowName = `farmer_registration_poc_${randomFlowSuffix()}`;
+  console.log(`Creating new draft flow: ${flowName}`);
+  if (endpointUri) console.log('Endpoint URI:', endpointUri);
+
+  // Create draft flow with new JSON
+  const createRes = await axios.post(
+    `${GRAPH_API}/${effectiveWabaId}/flows`,
+    {
+      name: flowName,
+      categories: ['LEAD_GENERATION'],
+      flow_json: flowJson,
+      publish: false,
+      ...(endpointUri ? { endpoint_uri: endpointUri } : {}),
+    },
+    { headers }
+  ).catch(catchResponse);
+
+  if (!createRes || createRes.status !== 200 && createRes.status !== 201) {
+    console.error('Create flow FAILED:', JSON.stringify(createRes?.data ?? 'No response', null, 2));
     process.exit(1);
   }
 
-  const { status: flowStatus, name: flowName } = detailsRes.data as { status: string; name: string };
-  console.log(`Flow: "${flowName}" | Status: ${flowStatus}`);
+  const flowId = (createRes.data as { id?: string })?.id;
+  if (!flowId) { console.error('No flow ID in create response:', JSON.stringify(createRes.data, null, 2)); process.exit(1); }
+  console.log(`Flow created (draft): ${flowId}`);
 
-  // Step 2: If PUBLISHED, deprecate it first so we can upload new JSON
-  if (flowStatus === 'PUBLISHED') {
-    console.log('Flow is PUBLISHED — deprecating to allow JSON update...');
-    await axios.post(
-      `${GRAPH_API}/${FLOW_ID}/deprecate`,
-      {},
-      { headers: { ...authHeaders, 'Content-Type': 'application/json' } }
-    ).catch((e: { response?: { status?: number; data?: unknown } }) => {
-      console.error('Deprecate failed:', JSON.stringify(e.response?.data ?? e, null, 2));
-      process.exit(1);
-    });
-    console.log('Flow deprecated (now DRAFT). Uploading new JSON...');
-  } else {
-    console.log('Flow is in DRAFT — uploading new JSON directly...');
-  }
-
-  // Step 3: Upload new flow JSON via assets API
-  const form = new FormData();
-  form.append('name', 'flow.json');
-  form.append('asset_type', 'FLOW_JSON');
-  form.append('file', Buffer.from(flowJson, 'utf-8'), {
-    filename: 'farmer-registration.json',
-    contentType: 'application/json',
-  });
-
-  const uploadRes = await axios.post(
-    `${GRAPH_API}/${FLOW_ID}/assets`,
-    form,
-    { headers: { ...authHeaders, ...form.getHeaders() } }
-  ).catch((e: { response?: { status?: number; data?: unknown } }) => e.response);
-
-  if (!uploadRes || uploadRes.status !== 200) {
-    console.error('Upload FAILED. Meta API response:', JSON.stringify(uploadRes?.data ?? 'No response', null, 2));
-    process.exit(1);
-  }
-
-  console.log('Flow JSON uploaded successfully.');
-
-  // Step 4: Check validation errors
-  const validationRes = await axios.get(
-    `${GRAPH_API}/${FLOW_ID}?fields=validation_errors`,
-    { headers: authHeaders }
-  ).catch(() => null);
-
-  const validationErrors: unknown[] = (validationRes?.data as { validation_errors?: unknown[] })?.validation_errors ?? [];
+  // Check validation errors
+  const validationErrors: unknown[] = (createRes.data as { validation_errors?: unknown[] }).validation_errors ?? [];
   if (validationErrors.length > 0) {
-    console.error('');
-    console.error('=== Flow JSON validation errors ===');
-    console.error('Docs: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes/');
-    (validationErrors as Array<{ error?: string; message?: string; path?: string; pointers?: Array<{ path?: string; line_start?: number; line_end?: number }> }>).forEach((e, i) => {
+    console.error('\n=== Flow JSON validation errors ===');
+    (validationErrors as Array<{ error?: string; message?: string; pointers?: Array<{ path?: string; line_start?: number; line_end?: number }> }>).forEach((e, i) => {
       console.error(`[${i + 1}] ${e.error ?? 'ERROR'}: ${e.message ?? ''}`);
-      const p = e.pointers?.[0]?.path ?? e.path;
-      if (p) console.error(`    path: ${p}`);
-      if (e.pointers?.[0]?.line_start != null) console.error(`    lines: ${e.pointers![0].line_start}-${e.pointers![0].line_end ?? e.pointers![0].line_start}`);
-      console.error('');
+      const p = e.pointers?.[0];
+      if (p?.path) console.error(`    path: ${p.path}`);
+      if (p?.line_start != null) console.error(`    lines: ${p.line_start}-${p.line_end ?? p.line_start}`);
     });
     console.error(JSON.stringify(validationErrors, null, 2));
-    console.error('=== End validation errors ===');
     process.exit(1);
   }
 
-  // Step 5: Publish the updated flow
-  console.log('No validation errors. Publishing updated flow...');
-  await axios.post(
-    `${GRAPH_API}/${FLOW_ID}/publish`,
-    {},
-    { headers: { ...authHeaders, 'Content-Type': 'application/json' } }
-  ).catch((e: { response?: { status?: number; data?: unknown } }) => {
-    console.error('Publish failed:', JSON.stringify(e.response?.data ?? e, null, 2));
+  // Publish the new flow
+  console.log('Publishing new flow...');
+  const publishRes = await axios.post(`${GRAPH_API}/${flowId}/publish`, {}, { headers }).catch(catchResponse);
+  if (!publishRes || publishRes.status !== 200) {
+    console.error('Publish FAILED:', JSON.stringify(publishRes?.data ?? 'No response', null, 2));
+    console.error('Flow was created as draft:', flowId, '— publish manually once endpoint is live.');
     process.exit(1);
-  });
+  }
+
+  fs.writeFileSync(path.join(__dirname, '../.flow_id'), flowId, 'utf-8');
 
   console.log('');
+  console.log('==========================================');
   console.log('Flow updated and published successfully!');
-  console.log(`FLOW_ID=${FLOW_ID}`);
+  console.log('');
+  console.log(`New FLOW_ID = ${flowId}`);
+  console.log('');
+  console.log('Next step (no redeploy needed):');
+  console.log('  Admin Portal → Config → set  whatsapp_flow_id = ' + flowId);
+  console.log('==========================================');
 };
 
 run().catch((err: unknown) => {

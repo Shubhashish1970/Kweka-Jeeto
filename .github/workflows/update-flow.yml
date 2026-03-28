@@ -1,7 +1,7 @@
 name: Update Flow JSON (O)
 # Run this whenever flows/farmer-registration.json changes.
-# Updates the existing published flow in-place (deprecate → upload → publish).
-# Does NOT create a new flow or change the FLOW_ID.
+# Creates a new published flow and prints the new FLOW_ID.
+# After this runs: update whatsapp_flow_id in Admin Portal → Config (no redeploy needed).
 
 on:
   workflow_dispatch:
@@ -17,12 +17,12 @@ jobs:
 
       - name: Check required secrets
         run: |
-          if [ -z "${{ secrets.FLOW_ID }}" ]; then
-            echo "::error::FLOW_ID secret is not set. Run 'Deploy Flow (O)' first to create the flow."
-            exit 1
-          fi
           if [ -z "${{ secrets.WHATSAPP_ACCESS_TOKEN }}" ]; then
             echo "::error::WHATSAPP_ACCESS_TOKEN secret is not set."
+            exit 1
+          fi
+          if [ -z "${{ secrets.WABA_ID }}" ] && [ -z "${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}" ]; then
+            echo "::error::Set WABA_ID or WHATSAPP_PHONE_NUMBER_ID in GitHub Secrets."
             exit 1
           fi
           echo "Required secrets are set."
@@ -34,8 +34,22 @@ jobs:
 
       - run: npm ci
 
-      - name: Update Flow JSON on Meta
+      - name: Create and publish new flow
         env:
-          FLOW_ID: ${{ secrets.FLOW_ID }}
           WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WABA_ID: ${{ secrets.WABA_ID }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          FLOW_ENDPOINT_URI: ${{ secrets.VITE_API_URL }}/flow/endpoint
         run: npm run update:flow
+
+      - name: Show next step
+        if: success()
+        run: |
+          NEW_FLOW_ID=$(cat .flow_id 2>/dev/null || echo "check logs above")
+          echo ""
+          echo "=========================================="
+          echo "ACTION REQUIRED:"
+          echo "  Admin Portal → Config → whatsapp_flow_id"
+          echo "  Set value to: $NEW_FLOW_ID"
+          echo "  No backend redeploy needed."
+          echo "=========================================="
