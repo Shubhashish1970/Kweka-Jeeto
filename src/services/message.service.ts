@@ -174,3 +174,95 @@ export const sendLocalizedTextMessage = async (
   const localized = await translateText(text, language);
   return sendTextMessage(to, localized);
 };
+
+/**
+ * Sends a WhatsApp interactive list message for language selection.
+ * Shows a "Select Language" button that opens a polished drawer with all 5 language options.
+ * Falls back to a plain text message if the list send fails.
+ */
+export const sendLanguageSelectionMessage = async (to: string): Promise<boolean> => {
+  try {
+    const phoneNumberId = await getPhoneNumberId();
+    const url = `${GRAPH_API_BASE}/${phoneNumberId}/messages`;
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: to.replace(/\D/g, ''),
+      type: 'interactive',
+      interactive: {
+        type: 'list',
+        header: {
+          type: 'text',
+          text: 'Kweka Jeeto 🌾',
+        },
+        body: {
+          text:
+            'Welcome! To get personalised crop advisory, please select your preferred language.\n\n' +
+            'स्वागत है! कृपया अपनी भाषा चुनें।\n' +
+            'स्वागत आहे! आपली भाषा निवडा.\n' +
+            'స్వాగతం! దయచేసి మీ భాషను ఎంచుకోండి.\n' +
+            'স্বাগতম! আপনার ভাষা নির্বাচন করুন।',
+        },
+        footer: {
+          text: 'Kweka AI · Agricultural Advisory',
+        },
+        action: {
+          button: 'Select Language',
+          sections: [
+            {
+              title: 'Choose Your Language',
+              rows: [
+                {
+                  id: 'lang_en',
+                  title: 'English',
+                  description: 'Continue in English',
+                },
+                {
+                  id: 'lang_hi',
+                  title: 'हिन्दी (Hindi)',
+                  description: 'हिंदी में जारी रखें',
+                },
+                {
+                  id: 'lang_mr',
+                  title: 'मराठी (Marathi)',
+                  description: 'मराठीत सुरू ठेवा',
+                },
+                {
+                  id: 'lang_te',
+                  title: 'తెలుగు (Telugu)',
+                  description: 'తెలుగులో కొనసాగించండి',
+                },
+                {
+                  id: 'lang_bn',
+                  title: 'বাংলা (Bengali)',
+                  description: 'বাংলায় চালিয়ে যান',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${env.whatsapp.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    logger.info('Language selection list message sent to', to);
+    return true;
+  } catch (err: unknown) {
+    const ax = err && typeof err === 'object' && 'response' in err
+      ? (err as { response?: { status?: number; data?: unknown } })
+      : null;
+    logger.error('Failed to send language list message (HTTP %s):', ax?.response?.status, ax?.response?.data ?? err);
+    // Fallback: plain text with numbers
+    return sendTextMessage(
+      to,
+      'Welcome to Kweka Jeeto! 🌾\n\nPlease reply with a number to select your language:\n\n1 - English\n2 - हिन्दी (Hindi)\n3 - मराठी (Marathi)\n4 - తెలుగు (Telugu)\n5 - বাংলা (Bengali)'
+    );
+  }
+};
