@@ -290,33 +290,38 @@ async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
   const waId = decodeWaIdFromFlowToken(flowToken);
 
   // LANGUAGE_SELECTION is the routing_model entry point — INIT must always return it.
-  // For returning farmers we put their current language first so it's easy to pick.
+  // For returning farmers: pre-select their stored language and surface it at the top.
   let languageOptions = ALL_LANGUAGE_OPTIONS;
+  let selectedLanguage = '';
 
   if (waId) {
     try {
-      const existing = await getFarmerByWaId(waId);
+      const [existing, sessionLang] = await Promise.all([
+        getFarmerByWaId(waId),
+        getSessionLanguage(waId).catch(() => null),
+      ]);
       if (existing) {
-        const sessionLang = await getSessionLanguage(waId).catch(() => null);
         const lang: Language = validateLanguage(sessionLang ?? existing.language ?? DEFAULT_LANGUAGE);
-        logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, '— showing LANGUAGE_SELECTION');
+        selectedLanguage = lang;
         // Surface their current language at the top of the list
         languageOptions = [
           ALL_LANGUAGE_OPTIONS.find((o) => o.id === lang) ?? ALL_LANGUAGE_OPTIONS[0],
           ...ALL_LANGUAGE_OPTIONS.filter((o) => o.id !== lang),
         ];
+        logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, '— pre-selecting in LANGUAGE_SELECTION');
       }
     } catch (err) {
       logger.warn('Flow INIT: could not check existing farmer:', err);
     }
   }
 
-  logger.info('Flow INIT: showing LANGUAGE_SELECTION for', waId ?? '(unknown)');
+  logger.info('Flow INIT: showing LANGUAGE_SELECTION for', waId ?? '(unknown)', 'preselect:', selectedLanguage || '(none)');
   return {
     screen: 'LANGUAGE_SELECTION',
     data: {
       header_image_src: FARM_HERO_IMAGE,
       language_options: languageOptions,
+      selected_language: selectedLanguage,
     },
   };
 }

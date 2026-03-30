@@ -59,6 +59,10 @@
               "title": "বাংলা (Bengali)"
             }
           ]
+        },
+        "selected_language": {
+          "type": "string",
+          "__example__": "en"
         }
       },
       "layout": {
@@ -88,7 +92,8 @@
                 "name": "language",
                 "label": "Select Language / भाषा चुनें",
                 "required": true,
-                "data-source": "${data.language_options}"
+                "data-source": "${data.language_options}",
+                "init-value": "${data.selected_language}"
               },
               {
                 "type": "Footer",
