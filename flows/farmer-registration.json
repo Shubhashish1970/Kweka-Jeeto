@@ -92,8 +92,7 @@
                 "name": "language",
                 "label": "Select Language / भाषा चुनें",
                 "required": true,
-                "data-source": "${data.language_options}",
-                "init-value": "${data.selected_language}"
+                "data-source": "${data.language_options}"
               },
               {
                 "type": "Footer",
@@ -106,7 +105,10 @@
                   }
                 }
               }
-            ]
+            ],
+            "init-values": {
+              "language": "${data.selected_language}"
+            }
           }
         ]
       }
