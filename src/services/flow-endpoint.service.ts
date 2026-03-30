@@ -278,77 +278,51 @@ export const getNextScreen = async (
 // Screen handlers
 // ---------------------------------------------------------------------------
 
+const ALL_LANGUAGE_OPTIONS = [
+  { id: 'en', title: 'English' },
+  { id: 'hi', title: 'हिन्दी (Hindi)' },
+  { id: 'mr', title: 'मराठी (Marathi)' },
+  { id: 'te', title: 'తెలుగు (Telugu)' },
+  { id: 'bn', title: 'বাংলা (Bengali)' },
+];
+
 async function handleInit(flowToken: string): Promise<Record<string, unknown>> {
   const waId = decodeWaIdFromFlowToken(flowToken);
 
-  // Load all raw config values (may be locale-map objects or legacy plain strings)
-  const [
-    rawWelcomeTitle, rawWelcomeBody, rawWelcomeButton,
-    rawReturningTitle, rawReturningBody, rawReturningButton,
-  ] = await Promise.all([
-    getConfigValue<unknown>('flow_welcome_title'),
-    getConfigValue<unknown>('flow_welcome_body'),
-    getConfigValue<unknown>('flow_welcome_button_label'),
-    getConfigValue<unknown>('flow_returning_title'),
-    getConfigValue<unknown>('flow_returning_body'),
-    getConfigValue<unknown>('flow_returning_button_label'),
-  ]);
+  // LANGUAGE_SELECTION is the routing_model entry point — INIT must always return it.
+  // For returning farmers we put their current language first so it's easy to pick.
+  let languageOptions = ALL_LANGUAGE_OPTIONS;
 
   if (waId) {
     try {
       const existing = await getFarmerByWaId(waId);
       if (existing) {
-        // Returning farmer — use their stored language (or session if updated recently)
         const sessionLang = await getSessionLanguage(waId).catch(() => null);
         const lang: Language = validateLanguage(sessionLang ?? existing.language ?? DEFAULT_LANGUAGE);
-        logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, 'crop:', existing.crop);
-        const cropName = cropLabel(existing.crop);
-        const vars = { name: existing.farmer_name, crop: cropName };
-        const pfAge = parseInt(existing.age) || 0;
-        return {
-          screen: 'WELCOME',
-          data: {
-            header_image_src: FARM_HERO_IMAGE,
-            welcome_title: applyTemplate(
-              getLocalizedString(rawReturningTitle, lang, 'flow_returning_title'), vars
-            ),
-            welcome_body: applyTemplate(
-              getLocalizedString(rawReturningBody, lang, 'flow_returning_body'), vars
-            ),
-            button_label: getLocalizedString(rawReturningButton, lang, 'flow_returning_button_label'),
-            // Pass returning farmer data via WELCOME button payload → FARMER_DETAILS
-            // Language is no longer in the flow — it comes from session/DB
-            ...(existing.farmer_name ? { pf_farmer_name: existing.farmer_name } : {}),
-            ...(pfAge > 0 ? { pf_age: pfAge } : {}),
-            ...(existing.profession ? { pf_profession: existing.profession } : {}),
-            ...(existing.state ? { pf_state: existing.state } : {}),
-            ...(existing.district ? { pf_district: existing.district } : {}),
-          },
-        };
+        logger.info('Flow INIT: returning farmer', waId, 'lang:', lang, '— showing LANGUAGE_SELECTION');
+        // Surface their current language at the top of the list
+        languageOptions = [
+          ALL_LANGUAGE_OPTIONS.find((o) => o.id === lang) ?? ALL_LANGUAGE_OPTIONS[0],
+          ...ALL_LANGUAGE_OPTIONS.filter((o) => o.id !== lang),
+        ];
       }
     } catch (err) {
       logger.warn('Flow INIT: could not check existing farmer:', err);
     }
   }
 
-  // New farmer — show LANGUAGE_SELECTION screen first
-  logger.info('Flow INIT: new farmer', waId, '— showing LANGUAGE_SELECTION');
+  logger.info('Flow INIT: showing LANGUAGE_SELECTION for', waId ?? '(unknown)');
   return {
     screen: 'LANGUAGE_SELECTION',
     data: {
       header_image_src: FARM_HERO_IMAGE,
-      language_options: [
-        { id: 'en', title: 'English' },
-        { id: 'hi', title: 'हिन्दी (Hindi)' },
-        { id: 'mr', title: 'मराठी (Marathi)' },
-        { id: 'te', title: 'తెలుగు (Telugu)' },
-        { id: 'bn', title: 'বাংলা (Bengali)' },
-      ],
+      language_options: languageOptions,
     },
   };
 }
 
 // Called when user submits LANGUAGE_SELECTION — stores language in session, returns WELCOME.
+// For returning farmers: serves the "welcome back" variant with their prefill data.
 async function handleLanguageSelection(
   data: Record<string, unknown>,
   flowToken: string
@@ -367,6 +341,45 @@ async function handleLanguageSelection(
     }
   }
 
+  // Check for returning farmer — serve personalised WELCOME if found
+  if (waId) {
+    try {
+      const existing = await getFarmerByWaId(waId);
+      if (existing) {
+        const [rawReturningTitle, rawReturningBody, rawReturningButton] = await Promise.all([
+          getConfigValue<unknown>('flow_returning_title'),
+          getConfigValue<unknown>('flow_returning_body'),
+          getConfigValue<unknown>('flow_returning_button_label'),
+        ]);
+        const cropName = cropLabel(existing.crop);
+        const vars = { name: existing.farmer_name ?? '', crop: cropName };
+        const pfAge = parseInt(existing.age) || 0;
+        logger.info('Flow LANGUAGE_SELECTION: returning farmer', waId, '— showing returning WELCOME');
+        return {
+          screen: 'WELCOME',
+          data: {
+            header_image_src: FARM_HERO_IMAGE,
+            welcome_title: applyTemplate(
+              getLocalizedString(rawReturningTitle, lang, 'flow_returning_title'), vars
+            ),
+            welcome_body: applyTemplate(
+              getLocalizedString(rawReturningBody, lang, 'flow_returning_body'), vars
+            ),
+            button_label: getLocalizedString(rawReturningButton, lang, 'flow_returning_button_label'),
+            ...(existing.farmer_name ? { pf_farmer_name: existing.farmer_name } : {}),
+            ...(pfAge > 0 ? { pf_age: pfAge } : {}),
+            ...(existing.profession ? { pf_profession: existing.profession } : {}),
+            ...(existing.state ? { pf_state: existing.state } : {}),
+            ...(existing.district ? { pf_district: existing.district } : {}),
+          },
+        };
+      }
+    } catch (err) {
+      logger.warn('Flow LANGUAGE_SELECTION: could not check existing farmer:', err);
+    }
+  }
+
+  // New farmer — show standard WELCOME
   const [rawWelcomeTitle, rawWelcomeBody, rawWelcomeButton] = await Promise.all([
     getConfigValue<unknown>('flow_welcome_title'),
     getConfigValue<unknown>('flow_welcome_body'),
